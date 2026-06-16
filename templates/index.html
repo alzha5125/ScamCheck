@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScamCheck AI</title>
+
+```
+<!-- Google Font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+```
+
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>🛡️ ScamCheck AI</h1>
+    <p>Kiểm tra tin nhắn có phải lừa đảo hay không</p>
+</header>
+
+<main>
+
+```
+<form action="/analyze" method="POST">
+
+    <!-- Input Card -->
+    <section class="card">
+
+        <label for="messageInput">
+            Nội dung tin nhắn
+        </label>
+
+        <div class="input-row">
+
+            <textarea
+                id="messageInput"
+                name="message"
+                placeholder="Dán nội dung tin nhắn vào đây..."
+            ></textarea>
+
+            <!-- Voice button only -->
+            <button
+                id="voiceButton"
+                type="button"
+                class="voice-button"
+                title="Nhập bằng giọng nói">
+                🎤
+            </button>
+
+        </div>
+
+        <button
+            id="analyzeButton"
+            type="submit"
+            class="primary-button">
+
+            Phân tích
+        </button>
+
+    </section>
+
+</form>
+```
+
+</main>
+
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
