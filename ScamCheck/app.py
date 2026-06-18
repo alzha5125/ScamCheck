@@ -1,145 +1,279 @@
-from pathlib import Path
-import json
-import os
-
-import certifi
-import httpx
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 from google import genai
-from google.genai import errors
-from google.genai import types
+from dotenv import load_dotenv
 
-APP_DIR = Path(__file__).resolve().parent
-CONFIG_PATH = APP_DIR / ".gitignore" / "config.json"
-FRONTEND_DIR = APP_DIR / "FrontEnd"
-MODEL_NAME = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-FALLBACK_MODEL_NAME = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-2.0-flash")
+import os
+import json
+import re
 
-app = Flask(__name__, static_folder=str(FRONTEND_DIR), static_url_path="")
+load_dotenv(dotenv_path=".env")
 
+app = Flask(__name__, static_folder=".", static_url_path="")
+CORS(app)
 
-@app.after_request
-def add_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    return response
+api_key = os.environ.get("GEMINI_API_KEY")
 
+if not api_key:
+    print("CẢNH BÁO: Chưa đọc được GEMINI_API_KEY từ file .env")
+else:
+    print("Đã đọc được GEMINI_API_KEY")
 
-def load_config():
-    if not CONFIG_PATH.exists():
-        return {}
+client = genai.Client(api_key=api_key)
 
-    with CONFIG_PATH.open("r", encoding="utf-8-sig") as config_file:
-        return json.load(config_file)
+VALID_LEVELS = ["Thấp", "Trung bình", "Cao", "Nghiêm trọng"]
 
 
-def load_api_key():
-    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GEMINI_APP_KEY")
-    if api_key:
-        return api_key
-
-    config = load_config()
-    return config.get("GEMINI_API_KEY") or config.get("GEMINI_APP_KEY")
+@app.route("/")
+def home():
+    return send_from_directory(".", "index.html")
 
 
-def load_ssl_verify():
-    raw_value = os.environ.get("GEMINI_SSL_VERIFY")
-    if raw_value is None:
-        raw_value = load_config().get("GEMINI_SSL_VERIFY", True)
-
-    if raw_value is False:
-        return False
-
-    if str(raw_value).strip().lower() in {"0", "false", "no", "off"}:
-        return False
-
-    return certifi.where()
-
-
-def create_client(api_key):
-    http_client = httpx.Client(verify=load_ssl_verify())
-    return genai.Client(
-        api_key=api_key,
-        http_options=types.HttpOptions(httpx_client=http_client),
-    )
-
-
-@app.get("/")
-def index():
-    return send_from_directory(FRONTEND_DIR, "index.html")
-
-
-@app.post("/analyze")
+@app.route("/analyze", methods=["POST"])
 def analyze():
-    if request.is_json:
-        payload = request.get_json(silent=True) or {}
-        message = str(payload.get("message", "")).strip()
-    else:
-        message = request.form.get("message", "").strip()
+    data = request.get_json(silent=True) or {}
+    message = (data.get("message") or "").strip()
 
     if not message:
-        return "Vui lòng nhập nội dung cần kiểm tra.", 400
+        return jsonify({
+            "error": "Bạn chưa nhập tin nhắn cần kiểm tra. Hãy dán một tin nhắn rồi thử lại nhé."
+        }), 400
 
-    api_key = load_api_key()
+    if len(message) > 5000:
+        return jsonify({
+            "error": "Tin nhắn quá dài. Bạn hãy rút gọn dưới 5000 ký tự rồi phân tích lại nhé."
+        }), 400
+
     if not api_key:
-        return (
-            "Backend chưa được cấu hình GEMINI_API_KEY hoặc GEMINI_APP_KEY.",
-            500,
-        )
+        return jsonify({
+            "error": "Ứng dụng chưa có API key. Hãy kiểm tra file .env rồi chạy lại app nhé."
+        }), 500
 
-    prompt = (
-        "Bạn là một chuyên gia phân tích tin nhắn lừa đảo. "
-        "Hãy đánh giá tin nhắn sau, nêu mức độ rủi ro, dấu hiệu đáng ngờ, "
-        "và lời khuyên ngắn gọn cho người nhận. "
-        "Trả lời bằng tiếng Việt, văn bản thuần, không dùng Markdown.\n\n"
-        f"Tin nhắn:\n{message}"
-    )
+    prompt = f"""
+Bạn là chuyên gia phát hiện tin nhắn lừa đảo tại Việt Nam, đồng thời là người tư vấn thân thiện cho người từ 45 tuổi trở lên.
+
+Nhiệm vụ của bạn là đánh giá mức độ đáng ngờ của tin nhắn dựa CHỈ trên nội dung được cung cấp.
+
+Không được suy diễn thông tin không có trong tin nhắn.
+
+Không được mặc định mọi tin nhắn đều là lừa đảo.
+
+Nếu bằng chứng chưa đủ, phải giảm mức độ cảnh báo.
+
+========================
+TIN NHẮN CẦN PHÂN TÍCH
+======================
+
+ {message}
+
+ 
+========================
+TIÊU CHÍ ĐÁNH GIÁ
+=================
+
+Kiểm tra các dấu hiệu sau:
+
+1. Giả mạo tổ chức
+
+* Ngân hàng
+* Công an
+* Tòa án
+* Cơ quan nhà nước
+* Công ty giao hàng
+* Trường học
+* Người quen
+
+2. Gây áp lực hoặc hối thúc
+
+* Khẩn cấp
+* Đe dọa khóa tài khoản
+* Đe dọa phạt tiền
+* Ép phản hồi ngay
+
+3. Yêu cầu thông tin nhạy cảm
+
+* OTP
+* Mật khẩu
+* CCCD
+* Tài khoản ngân hàng
+* Mã xác thực
+
+4. Yêu cầu tài chính
+
+* Chuyển tiền
+* Đặt cọc
+* Đầu tư
+* Nhận thưởng
+* Hoàn tiền
+
+5. Liên kết hoặc thông tin liên hệ đáng ngờ
+
+* Link rút gọn
+* Tên miền lạ
+* Email bất thường
+* Số điện thoại lạ
+
+6. Dấu hiệu thao túng tâm lý
+
+* Sợ hãi
+* Tham lam
+* Tò mò
+* Thương cảm
+
+7. Tính hợp lý
+
+* Nội dung có hợp lý không
+* Có mâu thuẫn không
+* Tổ chức thật có thường nhắn như vậy không
+
+========================
+QUY TẮC XÁC ĐỊNH MỨC ĐỘ
+=======================
+
+"Thấp"
+
+* Không có hoặc gần như không có dấu hiệu lừa đảo rõ ràng.
+
+"Trung bình"
+
+* Có 1–2 dấu hiệu đáng ngờ nhưng chưa đủ kết luận.
+
+"Cao"
+
+* Có nhiều dấu hiệu đáng ngờ hoặc giống các kịch bản lừa đảo phổ biến.
+
+"Nghiêm trọng"
+
+* Có yêu cầu OTP, mật khẩu, CCCD, thông tin ngân hàng, chuyển tiền.
+* Hoặc giả mạo cơ quan chức năng kết hợp đe dọa.
+* Hoặc nguy cơ mất tiền/thông tin cá nhân rất cao.
+
+========================
+YÊU CẦU NỘI DUNG JSON
+=====================
+
+* description: tối đa 2 câu ngắn, dễ hiểu.
+* signs: đúng 3 mục.
+* actions: đúng 3 mục.
+* suspicious_quote:
+
+  * Phải là đoạn nguyên văn đáng ngờ nhất trong tin nhắn.
+  * Nếu không có thì ghi:
+    "Không có đoạn nào đáng ngờ."
+* counselor:
+
+  * Giọng điệu nhẹ nhàng.
+  * Không phán xét.
+  * Không gây hoang mang.
+
+========================
+QUAN TRỌNG
+==========
+
+* Chỉ sử dụng bằng chứng có trong tin nhắn.
+* Không được bịa chi tiết.
+* Không được thêm khóa mới.
+* Không được bỏ khóa nào.
+* Chỉ trả về JSON hợp lệ.
+* Không markdown.
+* Không giải thích ngoài JSON.
+
+JSON phải có chính xác cấu trúc sau:
+
+{
+"level": "Thấp",
+"description": "",
+"signs": ["", "", ""],
+"suspicious_quote": "",
+"actions": ["", "", ""],
+"counselor": ""
+}
+
+"""
 
     try:
-        client = create_client(api_key)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+
+        raw_text = response.text or ""
+
+        if not raw_text.strip():
+            return jsonify({
+                "error": "AI từ chối hoặc không thể phân tích nội dung này. Bạn hãy thử viết lại tin nhắn ngắn gọn hơn nhé."
+            }), 403
+
+        cleaned = raw_text.strip()
+        cleaned = re.sub(r"^```json", "", cleaned, flags=re.MULTILINE).strip()
+        cleaned = re.sub(r"^```", "", cleaned, flags=re.MULTILINE).strip()
+        cleaned = re.sub(r"```$", "", cleaned, flags=re.MULTILINE).strip()
+
+        match = re.search(r"\{[\s\S]*\}", cleaned)
+        if match:
+            cleaned = match.group(0)
+
         try:
-            response = client.models.generate_content(
-                model=MODEL_NAME,
-                contents=prompt,
-            )
-        except errors.ServerError as error:
-            if error.code != 503 or not FALLBACK_MODEL_NAME:
-                raise
+            result = json.loads(cleaned)
+        except json.JSONDecodeError:
+            result = {}
 
-            app.logger.warning(
-                "Gemini model %s unavailable, retrying with %s",
-                MODEL_NAME,
-                FALLBACK_MODEL_NAME,
-            )
-            response = client.models.generate_content(
-                model=FALLBACK_MODEL_NAME,
-                contents=prompt,
-            )
-    except httpx.ConnectError as error:
-        if "CERTIFICATE_VERIFY_FAILED" in str(error):
-            app.logger.exception("Gemini SSL verification failed")
-            return (
-                "Lỗi SSL khi kết nối Gemini. Hãy cài chứng chỉ CA hợp lệ cho Python "
-                "hoặc đặt GEMINI_SSL_VERIFY=false trong môi trường local nếu chỉ dùng để phát triển.",
-                500,
-            )
-        app.logger.exception("Gemini connection error")
-        return f"Lỗi kết nối Gemini: {error}", 500
-    except errors.APIError as error:
-        app.logger.exception("Gemini API error")
-        return f"Lỗi Gemini API: {error}", 500
-    except Exception as error:
-        app.logger.exception("AI error")
-        return f"Lỗi backend: {error}", 500
+        if not isinstance(result, dict):
+            result = {}
 
-    return response.text or "AI không trả lời."
+        level = result.get("level", "Trung bình")
+        if level not in VALID_LEVELS:
+            level = "Trung bình"
 
+        signs = result.get("signs")
+        if not isinstance(signs, list) or len(signs) == 0:
+            signs = ["Có nội dung cần được kiểm tra thêm trước khi làm theo."]
 
-@app.route("/analyze", methods=["OPTIONS"])
-def analyze_options():
-    return "", 204
+        actions = result.get("actions")
+        if not isinstance(actions, list) or len(actions) == 0:
+            actions = [
+                "Không cung cấp OTP, mật khẩu hoặc thông tin cá nhân.",
+                "Không chuyển tiền khi chưa xác minh rõ nguồn gửi.",
+                "Liên hệ kênh chính thức của ngân hàng hoặc cơ quan liên quan để kiểm tra."
+            ]
+
+        safe_result = {
+            "level": level,
+            "description": result.get(
+                "description",
+                "AI đã hoàn tất phân tích tin nhắn này."
+            ),
+            "signs": signs,
+            "suspicious_quote": result.get(
+                "suspicious_quote",
+                message[:180] if level != "Thấp" else "Không có đoạn nào đáng ngờ."
+            ),
+            "actions": actions,
+            "counselor": result.get(
+                "counselor",
+                "Hãy bình tĩnh, không vội làm theo tin nhắn. Nếu thấy nghi ngờ, hãy hỏi người thân hoặc liên hệ kênh chính thức để kiểm tra lại."
+            )
+        }
+
+        return jsonify(safe_result)
+
+    except Exception as e:
+        error_text = str(e).lower()
+
+        if (
+            "safety" in error_text
+            or "blocked" in error_text
+            or "refuse" in error_text
+            or "finish_reason" in error_text
+        ):
+            return jsonify({
+                "error": "AI từ chối phân tích nội dung này. Bạn hãy thử viết lại tin nhắn ngắn gọn hơn nhé."
+            }), 403
+
+        return jsonify({
+            "error": "Hệ thống đang gặp sự cố khi gọi AI. Ứng dụng vẫn không bị gãy, bạn hãy thử lại sau nhé."
+        }), 500
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="127.0.0.1", port=5000)
