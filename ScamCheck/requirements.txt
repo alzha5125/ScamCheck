@@ -1,4 +1,3 @@
-certifi
 flask
+flask-cors
 google-genai
-httpx
