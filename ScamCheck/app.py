@@ -50,145 +50,31 @@ def analyze():
         }), 500
 
     prompt = f"""
-Bạn là chuyên gia phát hiện tin nhắn lừa đảo tại Việt Nam, đồng thời là người tư vấn thân thiện cho người từ 45 tuổi trở lên.
+Bạn là chuyên gia phát hiện tin nhắn lừa đảo, giải thích dễ hiểu cho người lớn tuổi 45+.
 
-Nhiệm vụ của bạn là đánh giá mức độ đáng ngờ của tin nhắn dựa CHỈ trên nội dung được cung cấp.
+Hãy phân tích tin nhắn sau:
+\"\"\"{message}\"\"\"
 
-Không được suy diễn thông tin không có trong tin nhắn.
+Chỉ trả về JSON hợp lệ, không markdown, không giải thích thêm.
 
-Không được mặc định mọi tin nhắn đều là lừa đảo.
+JSON bắt buộc có đúng các khóa sau:
+{{
+  "level": "Thấp",
+  "description": "Kết luận ngắn gọn, dễ hiểu",
+  "signs": ["dấu hiệu 1", "dấu hiệu 2", "dấu hiệu 3"],
+  "suspicious_quote": "đoạn đáng ngờ nhất trong tin nhắn, nếu không có thì ghi: Không có đoạn nào đáng ngờ.",
+  "actions": ["hành động 1", "hành động 2", "hành động 3"],
+  "counselor": "lời khuyên nhẹ nhàng của Cô tâm lý"
+}}
 
-Nếu bằng chứng chưa đủ, phải giảm mức độ cảnh báo.
+Quy ước mức độ:
+- Thấp: chưa có dấu hiệu nguy hiểm rõ ràng.
+- Trung bình: có vài dấu hiệu đáng ngờ.
+- Cao: nhiều dấu hiệu lừa đảo, nguy cơ mất tiền/thông tin cao.
+- Nghiêm trọng: yêu cầu OTP, mật khẩu, chuyển tiền, thông tin ngân hàng/CCCD hoặc giả mạo cơ quan chức năng.
 
-========================
-TIN NHẮN CẦN PHÂN TÍCH
-======================
-
- {message}
-
- 
-========================
-TIÊU CHÍ ĐÁNH GIÁ
-=================
-
-Kiểm tra các dấu hiệu sau:
-
-1. Giả mạo tổ chức
-
-* Ngân hàng
-* Công an
-* Tòa án
-* Cơ quan nhà nước
-* Công ty giao hàng
-* Trường học
-* Người quen
-
-2. Gây áp lực hoặc hối thúc
-
-* Khẩn cấp
-* Đe dọa khóa tài khoản
-* Đe dọa phạt tiền
-* Ép phản hồi ngay
-
-3. Yêu cầu thông tin nhạy cảm
-
-* OTP
-* Mật khẩu
-* CCCD
-* Tài khoản ngân hàng
-* Mã xác thực
-
-4. Yêu cầu tài chính
-
-* Chuyển tiền
-* Đặt cọc
-* Đầu tư
-* Nhận thưởng
-* Hoàn tiền
-
-5. Liên kết hoặc thông tin liên hệ đáng ngờ
-
-* Link rút gọn
-* Tên miền lạ
-* Email bất thường
-* Số điện thoại lạ
-
-6. Dấu hiệu thao túng tâm lý
-
-* Sợ hãi
-* Tham lam
-* Tò mò
-* Thương cảm
-
-7. Tính hợp lý
-
-* Nội dung có hợp lý không
-* Có mâu thuẫn không
-* Tổ chức thật có thường nhắn như vậy không
-
-========================
-QUY TẮC XÁC ĐỊNH MỨC ĐỘ
-=======================
-
-"Thấp"
-
-* Không có hoặc gần như không có dấu hiệu lừa đảo rõ ràng.
-
-"Trung bình"
-
-* Có 1–2 dấu hiệu đáng ngờ nhưng chưa đủ kết luận.
-
-"Cao"
-
-* Có nhiều dấu hiệu đáng ngờ hoặc giống các kịch bản lừa đảo phổ biến.
-
-"Nghiêm trọng"
-
-* Có yêu cầu OTP, mật khẩu, CCCD, thông tin ngân hàng, chuyển tiền.
-* Hoặc giả mạo cơ quan chức năng kết hợp đe dọa.
-* Hoặc nguy cơ mất tiền/thông tin cá nhân rất cao.
-
-========================
-YÊU CẦU NỘI DUNG JSON
-=====================
-
-* description: tối đa 2 câu ngắn, dễ hiểu.
-* signs: đúng 3 mục.
-* actions: đúng 3 mục.
-* suspicious_quote:
-
-  * Phải là đoạn nguyên văn đáng ngờ nhất trong tin nhắn.
-  * Nếu không có thì ghi:
-    "Không có đoạn nào đáng ngờ."
-* counselor:
-
-  * Giọng điệu nhẹ nhàng.
-  * Không phán xét.
-  * Không gây hoang mang.
-
-========================
-QUAN TRỌNG
-==========
-
-* Chỉ sử dụng bằng chứng có trong tin nhắn.
-* Không được bịa chi tiết.
-* Không được thêm khóa mới.
-* Không được bỏ khóa nào.
-* Chỉ trả về JSON hợp lệ.
-* Không markdown.
-* Không giải thích ngoài JSON.
-
-JSON phải có chính xác cấu trúc sau:
-
-{
-"level": "Thấp",
-"description": "",
-"signs": ["", "", ""],
-"suspicious_quote": "",
-"actions": ["", "", ""],
-"counselor": ""
-}
-
+Giá trị của "level" chỉ được là một trong bốn giá trị:
+"Thấp", "Trung bình", "Cao", "Nghiêm trọng".
 """
 
     try:
