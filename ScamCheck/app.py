@@ -1,32 +1,60 @@
+from pathlib import Path
+import json
+import os
+import re
+
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from google import genai
-from dotenv import load_dotenv
 
-import os
-import json
-import re
+APP_DIR = Path(__file__).resolve().parent
+CONFIG_PATH = APP_DIR / ".gitignore" / "config.json"
 
-load_dotenv(dotenv_path=".env")
+from pathlib import Path
 
-app = Flask(__name__, static_folder=".", static_url_path="")
+APP_DIR = Path(__file__).resolve().parent
+FRONTEND_DIR = APP_DIR / "FrontEnd"
+
+app = Flask(
+    __name__,
+    static_folder=str(FRONTEND_DIR),
+    static_url_path=""
+)
 CORS(app)
 
-api_key = os.environ.get("GEMINI_API_KEY")
+VALID_LEVELS = ["Thấp", "Trung bình", "Cao", "Nghiêm trọng"]
+
+
+def load_config():
+    if not CONFIG_PATH.exists():
+        return {}
+
+    with open(CONFIG_PATH, "r", encoding="utf-8-sig") as f:
+        return json.load(f)
+
+
+def load_api_key():
+    config = load_config()
+
+    return (
+        os.environ.get("GEMINI_API_KEY")
+        or config.get("GEMINI_API_KEY")
+    )
+
+
+api_key = load_api_key()
 
 if not api_key:
-    print("CẢNH BÁO: Chưa đọc được GEMINI_API_KEY từ file .env")
+    print("CẢNH BÁO: Chưa đọc được GEMINI_API_KEY")
 else:
     print("Đã đọc được GEMINI_API_KEY")
 
 client = genai.Client(api_key=api_key)
 
-VALID_LEVELS = ["Thấp", "Trung bình", "Cao", "Nghiêm trọng"]
-
 
 @app.route("/")
 def home():
-    return send_from_directory(".", "index.html")
+    return send_from_directory(FRONTEND_DIR, "index.html")
 
 
 @app.route("/analyze", methods=["POST"])
@@ -46,7 +74,7 @@ def analyze():
 
     if not api_key:
         return jsonify({
-            "error": "Ứng dụng chưa có API key. Hãy kiểm tra file .env rồi chạy lại app nhé."
+            "error": "Ứng dụng chưa có API key. Hãy kiểm tra file .gitignore/config.json rồi chạy lại app nhé."
         }), 500
 
     prompt = f"""
@@ -157,7 +185,7 @@ Giá trị của "level" chỉ được là một trong bốn giá trị:
             }), 403
 
         return jsonify({
-            "error": "Hệ thống đang gặp sự cố khi gọi AI. Ứng dụng vẫn không bị gãy, bạn hãy thử lại sau nhé."
+            "error": f"Hệ thống đang gặp sự cố khi gọi AI: {str(e)}"
         }), 500
 
 
