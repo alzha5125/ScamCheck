@@ -1,227 +1,288 @@
-<!doctype html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ScamCheck AI</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="app-shell">
-      <header class="header">
-        <div class="brand">
-          <div class="brand-icon">🛡️</div>
-          <div>
-            <h1>ScamCheck AI</h1>
-            <p>Kiểm tra tin nhắn nghi ngờ lừa đảo trong vài giây</p>
-          </div>
-        </div>
-        <div class="header-actions">
-          <button class="history-btn" id="openLibraryBtn">Scam Library</button>
-          <button class="history-btn" id="openHistoryBtn">Lịch sử</button>
-        </div>
-      </header>
+from pathlib import Path
+from datetime import datetime, timezone
+import json
+import os
+import re
+from uuid import uuid4
 
-      <main>
-        <section class="screen active" id="homeScreen">
-          <div class="hero-grid">
-            <section class="main-card input-card">
-              <div class="section-label">Dán tin nhắn cần kiểm tra</div>
-              <textarea
-                id="messageInput"
-                placeholder="Ví dụ: Tài khoản ngân hàng của bạn đang bị khóa. Bấm vào link để xác minh ngay..."
-              ></textarea>
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
+from google import genai
 
-              <div class="sample-buttons">
-                <button data-sample="bank">Tin giả ngân hàng</button>
-                <button data-sample="police">Tin giả công an</button>
-                <button data-sample="prize">Tin trúng thưởng</button>
-              </div>
+APP_DIR = Path(__file__).resolve().parent
+CONFIG_PATH = APP_DIR / ".gitignore" / "config.json"
+DATA_DIR = APP_DIR / "data"
+RESULTS_PATH = DATA_DIR / "results.json"
 
-              <button class="primary-btn" id="analyzeBtn">Phân tích</button>
-              <div class="url-scout">
-                <div class="section-label">Kiểm tra website</div>
+from pathlib import Path
 
-                <div class="url-row">
-                  <input
-                    id="websiteUrlInput"
-                    type="url"
-                    placeholder="https://example.com"
-                  />
+APP_DIR = Path(__file__).resolve().parent
+FRONTEND_DIR = APP_DIR / "FrontEnd"
 
-                  <button
-                    type="button"
-                    class="secondary-btn"
-                    id="analyzeWebsiteBtn"
-                  >
-                    Scan website
-                  </button>
-                </div>
-              </div>
-            </section>
+app = Flask(
+    __name__,
+    static_folder=str(FRONTEND_DIR),
+    static_url_path=""
+)
+CORS(app)
 
-            <aside class="main-card tips-card">
-              <h2>Dấu hiệu nên cảnh giác</h2>
-              <ul>
-                <li>Yêu cầu cung cấp OTP, mật khẩu hoặc số thẻ.</li>
-                <li>Giục chuyển tiền gấp hoặc đe dọa khóa tài khoản.</li>
-                <li>Đường link lạ, tên miền không giống tổ chức thật.</li>
-                <li>Giả danh ngân hàng, công an, shipper hoặc người quen.</li>
-              </ul>
-            </aside>
-          </div>
-        </section>
+VALID_LEVELS = ["Thấp", "Trung bình", "Cao", "Nghiêm trọng"]
 
-        <section class="screen" id="loadingScreen">
-          <div class="loading-card main-card">
-            <div class="spinner"></div>
-            <h2>Thám tử AI đang phân tích tin nhắn...</h2>
-            <p>Vui lòng đợi trong giây lát.</p>
-          </div>
-        </section>
 
-        <section class="screen" id="resultScreen">
-          <div class="result-layout">
-            <section class="main-card risk-card" id="riskCard">
-              <div class="risk-content">
-                <p class="section-label">Mức độ rủi ro</p>
-                <h2 id="riskTitle">Nghiêm trọng</h2>
-                <p id="riskDescription">
-                  Tin nhắn có nhiều dấu hiệu lừa đảo rõ ràng.
-                </p>
-                <div class="risk-meter" aria-label="Thanh mức độ rủi ro">
-                  <div class="risk-meter-fill" id="riskMeterFill"></div>
-                </div>
-              </div>
-              <div class="risk-badge" id="riskBadge">Nguy hiểm</div>
-            </section>
+def load_config():
+    if not CONFIG_PATH.exists():
+        return {}
 
-            <section class="main-card" id="signCard">
-              <h2>Dấu hiệu lừa đảo</h2>
-              <ul class="warning-list" id="signList"></ul>
-            </section>
+    with open(CONFIG_PATH, "r", encoding="utf-8-sig") as f:
+        return json.load(f)
 
-            <section class="main-card" id="suspiciousCard">
-              <h2>Đoạn trích đáng ngờ</h2>
-              <p class="quote-box" id="suspiciousQuote"></p>
-            </section>
 
-            <section class="main-card">
-              <h2>hành động nên làm</h2>
-              <div class="action-list" id="actionList"></div>
-            </section>
+def load_api_key():
+    config = load_config()
 
-            <section class="main-card counselor-card">
-              <div class="avatar">👩‍🏫</div>
-              <div>
-                <h2>Cô tâm lý</h2>
-                <p id="counselorText">
-                  Con hãy bình tĩnh, đừng bấm vào liên kết và cũng đừng chuyển
-                  tiền. Hãy hỏi người thân hoặc gọi tổng đài chính thức để kiểm
-                  tra lại nhé.
-                </p>
-              </div>
-            </section>
-            <section class="main-card" id="ChoiceCard" style="display: none">
-              <h2>Bạn đã làm gì?</h2>
+    return (
+        os.environ.get("GEMINI_API_KEY")
+        or config.get("GEMINI_API_KEY")
+    )
 
-              <div class="choice-grid">
-                <button class="choice-button" data-choice="None">
-                  Chưa làm gì
-                </button>
-                <button class="choice-button" data-choice="Link">
-                  Đã bấm vào đường dẫn
-                </button>
-                <button class="choice-button" data-choice="Send">
-                  Đã chuyển khoản
-                </button>
-                <button class="choice-button" data-choice="Otp">
-                  Đã cung cấp mã xác thực
-                </button>
-              </div>
 
-              <p id="Result"></p>
-            </section>
-            <section class="main-card warning-card-section">
-              <h2>Thẻ cảnh báo</h2>
-              <p>Tạo ảnh tóm tắt kết quả để chia sẻ cho người thân qua Zalo.</p>
+def load_results():
+    if not RESULTS_PATH.exists():
+        return {}
 
-              <canvas id="warningCanvas" width="1080" height="1350"></canvas>
+    with open(RESULTS_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
 
-              <div class="card-actions">
-                <button
-                  type="button"
-                  class="secondary-btn"
-                  id="createWarningCardBtn"
-                >
-                  Tạo thẻ cảnh báo
-                </button>
+    return data if isinstance(data, dict) else {}
 
-                <button
-                  type="button"
-                  class="primary-btn"
-                  id="downloadWarningCardBtn"
-                >
-                  Tải ảnh về máy
-                </button>
-              </div>
-            </section>
-            <section class="main-card share-card" id="shareCard">
-              <h2>Link kết quả</h2>
-              <p>Chia sẻ link này để người khác xem lại kết quả phân tích.</p>
-              <div class="share-row">
-                <input id="resultShareUrl" readonly value="" />
-                <button
-                  type="button"
-                  class="secondary-btn"
-                  id="copyShareUrlBtn"
-                >
-                  Sao chép
-                </button>
-              </div>
-            </section>
-            <button class="secondary-btn" id="backHomeBtn">
-              Kiểm tra tin khác
-            </button>
-          </div>
-        </section>
 
-        <section class="screen" id="historyScreen">
-          <section class="main-card">
-            <div class="history-header">
-              <div>
-                <p class="section-label">Trang lịch sử</p>
-                <h2>10 tin gần nhất</h2>
-              </div>
-              <button class="secondary-btn small" id="closeHistoryBtn">
-                Quay lại
-              </button>
-            </div>
-            <div class="history-list" id="historyList"></div>
-          </section>
-        </section>
-        <section class="screen" id="libraryScreen">
-          <section class="main-card library-card">
-            <div class="history-header">
-              <div>
-                <p class="section-label">Scam Library</p>
-                <h2>Thư viện các chiêu trò lừa đảo phổ biến</h2>
-              </div>
-              <button class="secondary-btn small" id="closeLibraryBtn">
-                Quay lại
-              </button>
-            </div>
-            <div class="library-list" id="libraryList"></div>
-          </section>
-        </section>
-      </main>
-    </div>
+def save_results(results):
+    DATA_DIR.mkdir(exist_ok=True)
 
-    <footer>
-      ScamCheck là công cụ giáo dục do nhóm học viên phát triển và không thay
-      thế cảnh báo chính thức từ ngân hàng hoặc cơ quan chức năng.
-    </footer>
+    sorted_items = sorted(
+        results.items(),
+        key=lambda item: item[1].get("created_at", ""),
+        reverse=True,
+    )[:1000]
 
-    <script src="script.js"></script>
-  </body>
-</html>
+    with open(RESULTS_PATH, "w", encoding="utf-8") as f:
+        json.dump(dict(sorted_items), f, ensure_ascii=False, indent=2)
+
+
+def create_saved_result(message, result):
+    result_id = uuid4().hex[:12]
+    results = load_results()
+
+    results[result_id] = {
+        "id": result_id,
+        "message": message,
+        "result": result,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    save_results(results)
+    return result_id
+
+
+api_key = load_api_key()
+
+if not api_key:
+    print("CẢNH BÁO: Chưa đọc được GEMINI_API_KEY")
+else:
+    print("Đã đọc được GEMINI_API_KEY")
+
+client = genai.Client(api_key=api_key)
+
+
+@app.route("/")
+def home():
+    return send_from_directory(FRONTEND_DIR, "index.html")
+
+
+@app.route("/r/<result_id>")
+def shared_result_page(result_id):
+    return send_from_directory(FRONTEND_DIR, "index.html")
+
+
+@app.route("/api/results/<result_id>")
+def get_saved_result(result_id):
+    saved = load_results().get(result_id)
+
+    if not saved:
+        return jsonify({"error": "Result not found"}), 404
+
+    return jsonify(saved)
+
+
+@app.route("/send-alert", methods=["POST"])
+def send_alert():
+    data = request.get_json(silent=True) or {}
+    message = (data.get("message") or "").strip()
+    result_id = (data.get("result_id") or "").strip()
+
+    if not message:
+        return jsonify({"error": "message is required"}), 400
+
+    config = load_config()
+    zalo_token = os.environ.get("ZALO_ACCESS_TOKEN") or config.get("ZALO_ACCESS_TOKEN")
+    facebook_token = (
+        os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN")
+        or config.get("FACEBOOK_PAGE_ACCESS_TOKEN")
+    )
+
+    # Provider API calls belong here. Keep tokens in environment variables or
+    # .gitignore/config.json, never in frontend JavaScript.
+    print(
+        json.dumps(
+            {
+                "event": "send_alert_requested",
+                "message": message,
+                "result_id": result_id,
+                "has_zalo_token": bool(zalo_token),
+                "has_facebook_token": bool(facebook_token),
+            },
+            ensure_ascii=False,
+        )
+    )
+
+    return jsonify({"ok": True})
+
+
+@app.route("/analyze", methods=["POST"])
+def analyze():
+    data = request.get_json(silent=True) or {}
+    message = (data.get("message") or "").strip()
+
+    if not message:
+        return jsonify({
+            "error": "Bạn chưa nhập tin nhắn cần kiểm tra. Hãy dán một tin nhắn rồi thử lại nhé."
+        }), 400
+
+    if len(message) > 5000:
+        return jsonify({
+            "error": "Tin nhắn quá dài. Bạn hãy rút gọn dưới 5000 ký tự rồi phân tích lại nhé."
+        }), 400
+
+    if not api_key:
+        return jsonify({
+            "error": "Ứng dụng chưa có API key. Hãy kiểm tra file .gitignore/config.json rồi chạy lại app nhé."
+        }), 500
+
+    prompt = f"""
+Bạn là chuyên gia phát hiện tin nhắn lừa đảo, giải thích dễ hiểu cho người lớn tuổi 45+.
+
+Hãy phân tích tin nhắn sau:
+\"\"\"{message}\"\"\"
+
+Chỉ trả về JSON hợp lệ, không markdown, không giải thích thêm.
+
+JSON bắt buộc có đúng các khóa sau:
+{{
+  "level": "Thấp",
+  "description": "Kết luận ngắn gọn, dễ hiểu",
+  "signs": ["dấu hiệu 1", "dấu hiệu 2", "dấu hiệu 3"],
+  "suspicious_quote": "đoạn đáng ngờ nhất trong tin nhắn, nếu không có thì ghi: Không có đoạn nào đáng ngờ.",
+  "actions": ["hành động 1", "hành động 2", "hành động 3"],
+  "counselor": "lời khuyên nhẹ nhàng của Cô tâm lý, giọng gần gũi, xưng con và gọi người dùng là bác. Kết quả trả về từ hai đến ba câu, giải thích chiêu thức tâm lý mà kẻ lừa đảo đã dùng trong tin nhắn."
+}}
+
+Quy ước mức độ:
+- Thấp: chưa có dấu hiệu nguy hiểm rõ ràng.
+- Trung bình: có vài dấu hiệu đáng ngờ.
+- Cao: nhiều dấu hiệu lừa đảo, nguy cơ mất tiền/thông tin cao.
+- Nghiêm trọng: yêu cầu OTP, mật khẩu, chuyển tiền, thông tin ngân hàng/CCCD hoặc giả mạo cơ quan chức năng.
+
+Giá trị của "level" chỉ được là một trong bốn giá trị:
+"Thấp", "Trung bình", "Cao", "Nghiêm trọng".
+"""
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+
+        raw_text = response.text or ""
+
+        if not raw_text.strip():
+            return jsonify({
+                "error": "AI từ chối hoặc không thể phân tích nội dung này. Bạn hãy thử viết lại tin nhắn ngắn gọn hơn nhé."
+            }), 403
+
+        cleaned = raw_text.strip()
+        cleaned = re.sub(r"^```json", "", cleaned, flags=re.MULTILINE).strip()
+        cleaned = re.sub(r"^```", "", cleaned, flags=re.MULTILINE).strip()
+        cleaned = re.sub(r"```$", "", cleaned, flags=re.MULTILINE).strip()
+
+        match = re.search(r"\{[\s\S]*\}", cleaned)
+        if match:
+            cleaned = match.group(0)
+
+        try:
+            result = json.loads(cleaned)
+        except json.JSONDecodeError:
+            result = {}
+
+        if not isinstance(result, dict):
+            result = {}
+
+        level = result.get("level", "Trung bình")
+        if level not in VALID_LEVELS:
+            level = "Trung bình"
+
+        signs = result.get("signs")
+        if not isinstance(signs, list) or len(signs) == 0:
+            signs = ["Có nội dung cần được kiểm tra thêm trước khi làm theo."]
+
+        actions = result.get("actions")
+        if not isinstance(actions, list) or len(actions) == 0:
+            actions = [
+                "Không cung cấp OTP, mật khẩu hoặc thông tin cá nhân.",
+                "Không chuyển tiền khi chưa xác minh rõ nguồn gửi.",
+                "Liên hệ kênh chính thức của ngân hàng hoặc cơ quan liên quan để kiểm tra."
+            ]
+
+        safe_result = {
+            "level": level,
+            "description": result.get(
+                "description",
+                "AI đã hoàn tất phân tích tin nhắn này."
+            ),
+            "signs": signs,
+            "suspicious_quote": result.get(
+                "suspicious_quote",
+                message[:180] if level != "Thấp" else "Không có đoạn nào đáng ngờ."
+            ),
+            "actions": actions,
+            "counselor": result.get(
+                "counselor",
+                "Hãy bình tĩnh, không vội làm theo tin nhắn. Nếu thấy nghi ngờ, hãy hỏi người thân hoặc liên hệ kênh chính thức để kiểm tra lại."
+            )
+        }
+
+        result_id = create_saved_result(message, safe_result)
+        safe_result["result_id"] = result_id
+        safe_result["result_url"] = request.host_url.rstrip("/") + f"/r/{result_id}"
+
+        return jsonify(safe_result)
+
+    except Exception as e:
+        error_text = str(e).lower()
+
+        if (
+            "safety" in error_text
+            or "blocked" in error_text
+            or "refuse" in error_text
+            or "finish_reason" in error_text
+        ):
+            return jsonify({
+                "error": "AI từ chối phân tích nội dung này. Bạn hãy thử viết lại tin nhắn ngắn gọn hơn nhé."
+            }), 403
+
+        return jsonify({
+            "error": f"Hệ thống đang gặp sự cố khi gọi AI: {str(e)}"
+        }), 500
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host="127.0.0.1", port=5000)
