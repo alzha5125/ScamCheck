@@ -3,6 +3,11 @@ from datetime import datetime, timezone
 import json
 import os
 import re
+import socket
+import ssl
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin, urlparse
 from uuid import uuid4
 
 from flask import Flask, request, jsonify, send_from_directory
@@ -84,6 +89,235 @@ def create_saved_result(message, result):
     return result_id
 
 
+def normalize_url(raw_url):
+    raw_url = (raw_url or "").strip()
+
+    if not raw_url:
+        return ""
+
+    if not re.match(r"^https?://", raw_url, re.IGNORECASE):
+        raw_url = "https://" + raw_url
+
+    parsed = urlparse(raw_url)
+
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return ""
+
+    return raw_url
+
+
+def get_ssl_info(hostname):
+    try:
+        context = ssl.create_default_context()
+
+        with socket.create_connection((hostname, 443), timeout=5) as sock:
+            with context.wrap_socket(sock, server_hostname=hostname) as secure_sock:
+                cert = secure_sock.getpeercert()
+
+        return {
+            "valid": True,
+            "issuer": dict(x[0] for x in cert.get("issuer", [])),
+            "not_after": cert.get("notAfter"),
+        }
+    except Exception as exc:
+        return {
+            "valid": False,
+            "error": str(exc),
+        }
+
+
+def get_domain_age_info(domain):
+    try:
+        import requests
+
+        response = requests.get(
+            f"https://rdap.org/domain/{domain}",
+            timeout=8,
+            headers={"User-Agent": "ScamCheckBot/1.0"},
+        )
+
+        if not response.ok:
+            return {"available": False, "error": f"RDAP status {response.status_code}"}
+
+        data = response.json()
+        registration_date = None
+
+        for event in data.get("events", []):
+            if event.get("eventAction") in {"registration", "registered"}:
+                registration_date = event.get("eventDate")
+                break
+
+        age_days = None
+        if registration_date:
+            registered = datetime.fromisoformat(registration_date.replace("Z", "+00:00"))
+            age_days = (datetime.now(timezone.utc) - registered).days
+
+        return {
+            "available": True,
+            "registration_date": registration_date,
+            "age_days": age_days,
+            "registrar": (data.get("registrar") or {}).get("name"),
+        }
+    except Exception as exc:
+        return {"available": False, "error": str(exc)}
+
+
+def scan_website_signals(url, html, title, final_url, redirects, ssl_info, domain_info):
+    parsed = urlparse(final_url or url)
+    domain = parsed.netloc.lower()
+    text = re.sub(r"\s+", " ", html).lower()
+    signals = []
+    score = 0
+
+    suspicious_keywords = [
+        "urgent",
+        "verify account",
+        "claim reward",
+        "limited time",
+        "otp",
+        "password",
+        "bank account",
+        "winner",
+        "congratulations",
+        "transfer money",
+        "khẩn cấp",
+        "xác minh",
+        "trúng thưởng",
+        "mã otp",
+        "mật khẩu",
+        "chuyển tiền",
+    ]
+    keyword_hits = [word for word in suspicious_keywords if word in text]
+
+    if keyword_hits:
+        score += min(3, len(keyword_hits))
+        signals.append(f"Suspicious keywords found: {', '.join(keyword_hits[:8])}.")
+
+    if redirects:
+        score += min(3, len(redirects))
+        signals.append(f"Page redirects {len(redirects)} time(s) before loading.")
+
+    if not ssl_info.get("valid"):
+        score += 2
+        signals.append("SSL certificate could not be verified.")
+
+    age_days = domain_info.get("age_days")
+    if age_days is not None and age_days < 90:
+        score += 3
+        signals.append(f"Domain appears new: about {age_days} day(s) old.")
+    elif age_days is None:
+        score += 1
+        signals.append("Domain age could not be confirmed.")
+
+    known_brands = [
+        "vietcombank",
+        "bidv",
+        "techcombank",
+        "mbbank",
+        "facebook",
+        "zalo",
+        "shopee",
+        "lazada",
+        "paypal",
+        "apple",
+        "google",
+        "microsoft",
+    ]
+    brand_hits = [brand for brand in known_brands if brand in text or brand in domain]
+    suspicious_domain_parts = ["-", "verify", "security", "support", "login", "account"]
+
+    if brand_hits and any(part in domain for part in suspicious_domain_parts):
+        score += 3
+        signals.append(
+            f"Possible brand impersonation involving: {', '.join(sorted(set(brand_hits)))}."
+        )
+
+    contact_matches = re.findall(
+        r"[\w.+-]+@[\w-]+\.[\w.-]+|\+?\d[\d\s().-]{7,}\d",
+        html,
+    )
+
+    if not contact_matches:
+        score += 1
+        signals.append("No clear contact email or phone number found.")
+
+    form_count = len(re.findall(r"<form\b", html, flags=re.IGNORECASE))
+    password_fields = len(re.findall(r'type=["\']password["\']', html, flags=re.IGNORECASE))
+
+    if form_count:
+        score += 1
+        signals.append(f"Page contains {form_count} form(s).")
+
+    if password_fields:
+        score += 3
+        signals.append("Page contains password input fields.")
+
+    level = "Thấp"
+    if score >= 8:
+        level = "Nghiêm Trọng"
+    elif score >= 5:
+        level = "Cao"
+    elif score >= 2:
+        level = "Trung bình"
+
+    return {
+        "level": level,
+        "score": score,
+        "signals": signals or ["No major heuristic scam signal found."],
+        "keyword_hits": keyword_hits,
+        "contact_count": len(contact_matches),
+        "form_count": form_count,
+        "password_fields": password_fields,
+        "title": title,
+        "domain": domain,
+    }
+
+
+def explain_website_with_ai(url, title, html, findings):
+    if not api_key:
+        return None
+
+    prompt = f"""
+Analyze this website for scam indicators. Explain in Vietnamese, concise and practical.
+
+URL: {url}
+Title: {title}
+Heuristic findings:
+{json.dumps(findings, ensure_ascii=False)}
+
+Content:
+{html[:10000]}
+
+Return valid JSON only:
+{{
+  "description": "short conclusion",
+  "signs": ["signal 1", "signal 2", "signal 3"],
+  "actions": ["action 1", "action 2", "action 3"],
+  "counselor": "friendly warning in Vietnamese"
+}}
+"""
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
+        raw_text = response.text or ""
+        cleaned = raw_text.strip()
+        cleaned = re.sub(r"^```json", "", cleaned, flags=re.MULTILINE).strip()
+        cleaned = re.sub(r"^```", "", cleaned, flags=re.MULTILINE).strip()
+        cleaned = re.sub(r"```$", "", cleaned, flags=re.MULTILINE).strip()
+
+        match = re.search(r"\{[\s\S]*\}", cleaned)
+        if match:
+            cleaned = match.group(0)
+
+        data = json.loads(cleaned)
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+
+
 api_key = load_api_key()
 
 if not api_key:
@@ -146,6 +380,117 @@ def send_alert():
     )
 
     return jsonify({"ok": True})
+
+
+@app.route("/analyze-website", methods=["POST"])
+def analyze_website():
+    try:
+        import requests
+        from bs4 import BeautifulSoup
+    except ImportError:
+        return jsonify({
+            "error": "Website scanner dependencies are missing. Run: pip install -r requirements.txt"
+        }), 500
+
+    data = request.get_json(silent=True) or {}
+    raw_url = data.get("url") or data.get("message") or ""
+    url = normalize_url(raw_url)
+
+    if not url:
+        return jsonify({"error": "A valid http/https URL is required."}), 400
+
+    try:
+        session = requests.Session()
+        session.trust_env = False
+        response = session.get(
+            url,
+            timeout=10,
+            allow_redirects=True,
+            headers={"User-Agent": "Mozilla/5.0 ScamCheckBot/1.0"},
+        )
+    except requests.RequestException as exc:
+        hostname = urlparse(url).hostname or url
+        return jsonify({
+            "error": (
+                f"Could not fetch {hostname}. Check that the domain exists and is reachable. "
+                "For Scamwatch, try https://www.scamwatch.gov.au"
+            ),
+            "details": str(exc),
+        }), 400
+
+    content_type = response.headers.get("Content-Type", "")
+    html = response.text or ""
+
+    if "text/html" not in content_type and "<html" not in html.lower():
+        return jsonify({"error": "The URL did not return an HTML page."}), 400
+
+    soup = BeautifulSoup(html, "html.parser")
+    title = soup.title.get_text(" ", strip=True) if soup.title else "No title"
+    visible_text = soup.get_text(" ", strip=True)
+    final_url = response.url
+    redirects = [item.url for item in response.history]
+    hostname = urlparse(final_url).hostname or urlparse(url).hostname or ""
+    ssl_info = get_ssl_info(hostname) if hostname else {"valid": False, "error": "No hostname"}
+    domain_info = get_domain_age_info(hostname) if hostname else {"available": False}
+
+    findings = scan_website_signals(
+        url=url,
+        html=html,
+        title=title,
+        final_url=final_url,
+        redirects=redirects,
+        ssl_info=ssl_info,
+        domain_info=domain_info,
+    )
+    ai_explanation = explain_website_with_ai(
+        final_url,
+        title,
+        visible_text[:10000],
+        {
+            **findings,
+            "ssl": ssl_info,
+            "domain_age": domain_info,
+            "redirects": redirects,
+        },
+    )
+
+    default_description = (
+        f"ScamCheck inspected {hostname}. Risk score: {findings['score']}."
+    )
+    result = {
+        "level": findings["level"],
+        "description": (ai_explanation or {}).get("description", default_description),
+        "signs": (ai_explanation or {}).get("signs", findings["signals"]),
+        "suspicious_quote": title,
+        "actions": (ai_explanation or {}).get("actions", [
+            "Do not enter passwords, OTPs, or banking details on this site until verified.",
+            "Check the official domain by typing it yourself in the browser.",
+            "Ask the real organization through an official phone number or app.",
+        ]),
+        "counselor": (ai_explanation or {}).get(
+            "counselor",
+            "Con hãy kiểm tra thật kỹ trước khi nhập thông tin cá nhân. Nếu website tạo cảm giác gấp gáp hoặc yêu cầu mật khẩu, OTP, tài khoản ngân hàng thì nên dừng lại và xác minh qua kênh chính thức.",
+        ),
+        "website": {
+            "url": url,
+            "final_url": final_url,
+            "title": title,
+            "domain": hostname,
+            "redirects": redirects,
+            "ssl": ssl_info,
+            "domain_age": domain_info,
+            "keyword_hits": findings["keyword_hits"],
+            "contact_count": findings["contact_count"],
+            "form_count": findings["form_count"],
+            "password_fields": findings["password_fields"],
+        },
+    }
+
+    result_id = create_saved_result(final_url, result)
+    result["result_id"] = result_id
+    result["result_url"] = request.host_url.rstrip("/") + f"/r/{result_id}"
+
+    return jsonify(result)
 
 
 @app.route("/analyze", methods=["POST"])
