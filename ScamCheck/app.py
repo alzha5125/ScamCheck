@@ -92,7 +92,7 @@ JSON bắt buộc có đúng các khóa sau:
   "signs": ["dấu hiệu 1", "dấu hiệu 2", "dấu hiệu 3"],
   "suspicious_quote": "đoạn đáng ngờ nhất trong tin nhắn, nếu không có thì ghi: Không có đoạn nào đáng ngờ.",
   "actions": ["hành động 1", "hành động 2", "hành động 3"],
-  "counselor": "lời khuyên nhẹ nhàng của Cô tâm lý"
+  "counselor": "lời khuyên nhẹ nhàng của Cô tâm lý, giọng gần gũi, xưng con và gọi người dùng là bác. Kết quả trả về từ hai đến ba câu, giải thích chiêu thức tâm lý mà kẻ lừa đảo đã dùng trong tin nhắn."
 }}
 
 Quy ước mức độ:
