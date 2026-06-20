@@ -234,6 +234,8 @@ const screens = {
 
 const messageInput = document.getElementById("messageInput");
 const analyzeBtn = document.getElementById("analyzeBtn");
+const websiteUrlInput = document.getElementById("websiteUrlInput");
+const analyzeWebsiteBtn = document.getElementById("analyzeWebsiteBtn");
 const openHistoryBtn = document.getElementById("openHistoryBtn");
 const closeHistoryBtn = document.getElementById("closeHistoryBtn");
 const openLibraryBtn = document.getElementById("openLibraryBtn");
@@ -611,6 +613,40 @@ async function analyzeWithAI(text) {
   }
 }
 
+async function analyzeWebsite(url) {
+  try {
+    const response = await fetch("/analyze-website", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+
+    const rawBody = await response.text();
+    let data;
+
+    try {
+      data = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      throw new Error(
+        rawBody.slice(0, 220) ||
+          "Backend returned an empty website scan response.",
+      );
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not scan this website.");
+    }
+
+    return data;
+  } catch (error) {
+    if (!navigator.onLine) {
+      throw new Error("Bạn đang mất kết nối mạng. Hãy kiểm tra Internet rồi thử lại.");
+    }
+
+    throw error;
+  }
+}
+
 async function sendAlert(message, resultId = "") {
   try {
     await fetch("/send-alert", {
@@ -687,6 +723,31 @@ analyzeBtn.addEventListener("click", async () => {
     showScreen("result");
   }
 });
+
+if (analyzeWebsiteBtn && websiteUrlInput) {
+  analyzeWebsiteBtn.addEventListener("click", async () => {
+    const url = websiteUrlInput.value.trim();
+
+    if (!url) {
+      showFriendlyError("Bạn chưa nhập URL website cần kiểm tra.");
+      return;
+    }
+
+    showScreen("loading");
+
+    try {
+      const websiteResult = await analyzeWebsite(url);
+      const source = websiteResult.website?.final_url || url;
+
+      renderResult(source, websiteResult, true);
+      sendAlert("Someone submitted a website scam check", websiteResult.result_id || "");
+      showScreen("result");
+    } catch (error) {
+      alert(error.message || "Không thể kiểm tra website này. Bạn hãy thử lại.");
+      showScreen("home");
+    }
+  });
+}
 
 openHistoryBtn.addEventListener("click", () => {
   renderHistory();
