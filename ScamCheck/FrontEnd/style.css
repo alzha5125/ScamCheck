@@ -13,21 +13,14 @@
   --orange: #f97316;
   --red: #dc2626;
 }
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap");
 
-* {
-  font-family: "Be Vietnam Pro", sans-serif;
-}
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: "Be Vietnam Pro", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+  font-family: Arial, Helvetica, sans-serif;
   background: linear-gradient(135deg, #f5f9ff, #ffffff);
   color: var(--text);
   font-size: 18px;
@@ -177,6 +170,31 @@ button {
 .secondary-btn:hover,
 .sample-buttons button:hover {
   transform: translateY(-1px);
+}
+
+.url-scout {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.url-row {
+  display: flex;
+  gap: 12px;
+}
+
+.url-row input {
+  flex: 1;
+  min-width: 0;
+  border: 2px solid var(--border);
+  border-radius: 18px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-size: 17px;
+}
+
+.url-row button {
+  flex: 0 0 auto;
 }
 
 .tips-card h2,
@@ -395,8 +413,7 @@ button {
 
 .library-toggle-title strong {
   font-size: 21px;
-  font-family: "Be Vietnam Pro", sans-serif;
-  font-weight: 700;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .library-toggle-title span {
@@ -482,20 +499,12 @@ button {
 }
 
 .level-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  min-width: 140px;
-  height: 52px;
-
+  display: inline-block;
   color: #fff;
   border-radius: 999px;
-  padding: 0 20px;
-
-  font-weight: 700;
-  font-size: 18px;
-  white-space: nowrap;
+  padding: 8px 12px;
+  font-weight: 800;
+  text-align: center;
 }
 
 .level-low {
@@ -572,6 +581,12 @@ footer {
   .sample-buttons button {
     width: 100%;
     padding: 17px;
+  }
+  .url-row {
+    flex-direction: column;
+  }
+  .url-row button {
+    width: 100%;
   }
   .primary-btn {
     padding: 20px;
