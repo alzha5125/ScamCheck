@@ -39,16 +39,21 @@
               </div>
 
               <button class="primary-btn" id="analyzeBtn">Phân tích</button>
-
               <div class="url-scout">
                 <div class="section-label">Kiểm tra website</div>
+
                 <div class="url-row">
                   <input
                     id="websiteUrlInput"
                     type="url"
                     placeholder="https://example.com"
                   />
-                  <button type="button" class="secondary-btn" id="analyzeWebsiteBtn">
+
+                  <button
+                    type="button"
+                    class="secondary-btn"
+                    id="analyzeWebsiteBtn"
+                  >
                     Scan website
                   </button>
                 </div>
@@ -117,6 +122,26 @@
                 </p>
               </div>
             </section>
+            <section class="main-card" id="ChoiceCard" style="display: none">
+              <h2>Bạn đã làm gì?</h2>
+
+              <div class="choice-grid">
+                <button class="choice-button" data-choice="None">
+                  Chưa làm gì
+                </button>
+                <button class="choice-button" data-choice="Link">
+                  Đã bấm vào đường dẫn
+                </button>
+                <button class="choice-button" data-choice="Send">
+                  Đã chuyển khoản
+                </button>
+                <button class="choice-button" data-choice="Otp">
+                  Đã cung cấp mã xác thực
+                </button>
+              </div>
+
+              <p id="Result"></p>
+            </section>
             <section class="main-card warning-card-section">
               <h2>Thẻ cảnh báo</h2>
               <p>Tạo ảnh tóm tắt kết quả để chia sẻ cho người thân qua Zalo.</p>
@@ -146,7 +171,11 @@
               <p>Chia sẻ link này để người khác xem lại kết quả phân tích.</p>
               <div class="share-row">
                 <input id="resultShareUrl" readonly value="" />
-                <button type="button" class="secondary-btn" id="copyShareUrlBtn">
+                <button
+                  type="button"
+                  class="secondary-btn"
+                  id="copyShareUrlBtn"
+                >
                   Sao chép
                 </button>
               </div>
@@ -187,7 +216,6 @@
         </section>
       </main>
     </div>
-    
 
     <footer>
       ScamCheck là công cụ giáo dục do nhóm học viên phát triển và không thay
