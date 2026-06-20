@@ -1,7 +1,9 @@
 from pathlib import Path
+from datetime import datetime, timezone
 import json
 import os
 import re
+from uuid import uuid4
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -9,6 +11,8 @@ from google import genai
 
 APP_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = APP_DIR / ".gitignore" / "config.json"
+DATA_DIR = APP_DIR / "data"
+RESULTS_PATH = DATA_DIR / "results.json"
 
 from pathlib import Path
 
@@ -42,6 +46,44 @@ def load_api_key():
     )
 
 
+def load_results():
+    if not RESULTS_PATH.exists():
+        return {}
+
+    with open(RESULTS_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    return data if isinstance(data, dict) else {}
+
+
+def save_results(results):
+    DATA_DIR.mkdir(exist_ok=True)
+
+    sorted_items = sorted(
+        results.items(),
+        key=lambda item: item[1].get("created_at", ""),
+        reverse=True,
+    )[:1000]
+
+    with open(RESULTS_PATH, "w", encoding="utf-8") as f:
+        json.dump(dict(sorted_items), f, ensure_ascii=False, indent=2)
+
+
+def create_saved_result(message, result):
+    result_id = uuid4().hex[:12]
+    results = load_results()
+
+    results[result_id] = {
+        "id": result_id,
+        "message": message,
+        "result": result,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    save_results(results)
+    return result_id
+
+
 api_key = load_api_key()
 
 if not api_key:
@@ -55,6 +97,55 @@ client = genai.Client(api_key=api_key)
 @app.route("/")
 def home():
     return send_from_directory(FRONTEND_DIR, "index.html")
+
+
+@app.route("/r/<result_id>")
+def shared_result_page(result_id):
+    return send_from_directory(FRONTEND_DIR, "index.html")
+
+
+@app.route("/api/results/<result_id>")
+def get_saved_result(result_id):
+    saved = load_results().get(result_id)
+
+    if not saved:
+        return jsonify({"error": "Result not found"}), 404
+
+    return jsonify(saved)
+
+
+@app.route("/send-alert", methods=["POST"])
+def send_alert():
+    data = request.get_json(silent=True) or {}
+    message = (data.get("message") or "").strip()
+    result_id = (data.get("result_id") or "").strip()
+
+    if not message:
+        return jsonify({"error": "message is required"}), 400
+
+    config = load_config()
+    zalo_token = os.environ.get("ZALO_ACCESS_TOKEN") or config.get("ZALO_ACCESS_TOKEN")
+    facebook_token = (
+        os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN")
+        or config.get("FACEBOOK_PAGE_ACCESS_TOKEN")
+    )
+
+    # Provider API calls belong here. Keep tokens in environment variables or
+    # .gitignore/config.json, never in frontend JavaScript.
+    print(
+        json.dumps(
+            {
+                "event": "send_alert_requested",
+                "message": message,
+                "result_id": result_id,
+                "has_zalo_token": bool(zalo_token),
+                "has_facebook_token": bool(facebook_token),
+            },
+            ensure_ascii=False,
+        )
+    )
+
+    return jsonify({"ok": True})
 
 
 @app.route("/analyze", methods=["POST"])
@@ -168,6 +259,10 @@ Giá trị của "level" chỉ được là một trong bốn giá trị:
                 "Hãy bình tĩnh, không vội làm theo tin nhắn. Nếu thấy nghi ngờ, hãy hỏi người thân hoặc liên hệ kênh chính thức để kiểm tra lại."
             )
         }
+
+        result_id = create_saved_result(message, safe_result)
+        safe_result["result_id"] = result_id
+        safe_result["result_url"] = request.host_url.rstrip("/") + f"/r/{result_id}"
 
         return jsonify(safe_result)
 

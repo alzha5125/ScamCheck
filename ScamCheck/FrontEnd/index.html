@@ -16,7 +16,10 @@
             <p>Kiểm tra tin nhắn nghi ngờ lừa đảo trong vài giây</p>
           </div>
         </div>
-        <button class="history-btn" id="openHistoryBtn">Lịch sử</button>
+        <div class="header-actions">
+          <button class="history-btn" id="openLibraryBtn">Scam Library</button>
+          <button class="history-btn" id="openHistoryBtn">Lịch sử</button>
+        </div>
       </header>
 
       <main>
@@ -124,6 +127,16 @@
                 </button>
               </div>
             </section>
+            <section class="main-card share-card" id="shareCard">
+              <h2>Link kết quả</h2>
+              <p>Chia sẻ link này để người khác xem lại kết quả phân tích.</p>
+              <div class="share-row">
+                <input id="resultShareUrl" readonly value="" />
+                <button type="button" class="secondary-btn" id="copyShareUrlBtn">
+                  Sao chép
+                </button>
+              </div>
+            </section>
             <button class="secondary-btn" id="backHomeBtn">
               Kiểm tra tin khác
             </button>
@@ -144,8 +157,24 @@
             <div class="history-list" id="historyList"></div>
           </section>
         </section>
+        <meta charset="UTF-8" />
+        <section class="screen" id="libraryScreen">
+          <section class="main-card library-card">
+            <div class="history-header">
+              <div>
+                <p class="section-label">Scam Library</p>
+                <h2>Thư viện các chiêu trò lừa đảo phổ biến</h2>
+              </div>
+              <button class="secondary-btn small" id="closeLibraryBtn">
+                Quay lại
+              </button>
+            </div>
+            <div class="library-list" id="libraryList"></div>
+          </section>
+        </section>
       </main>
     </div>
+    
 
     <footer>
       ScamCheck là công cụ giáo dục do nhóm học viên phát triển và không thay

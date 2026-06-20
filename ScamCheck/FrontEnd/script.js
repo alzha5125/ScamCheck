@@ -6,6 +6,218 @@ const samples = {
     "Chúc mừng bạn đã trúng thưởng xe SH và 100 triệu đồng. Hãy gửi phí hồ sơ 500.000đ và CCCD để nhận thưởng ngay hôm nay.",
 };
 
+const scamLibrary = [
+  {
+    title: "Giả mạo ngân hàng",
+    summary: "Dọa khóa tài khoản, báo giao dịch lạ, dụ bấm link hoặc đọc OTP.",
+    examples: [
+      "Tài khoản của quý khách sắp bị khóa. Vui lòng truy cập link dưới đây để xác thực thông tin.",
+      "Tài khoản của bạn vừa nhận 20 triệu đồng. Nếu không phải bạn thực hiện, hãy gọi ngay số này.",
+    ],
+    signs: [
+      "Tạo cảm giác khẩn cấp.",
+      "Yêu cầu bấm vào đường link.",
+      "Đòi mật khẩu, mã OTP.",
+      "Số điện thoại hoặc website lạ.",
+    ],
+    defenses: [
+      "Không cung cấp OTP cho bất kỳ ai.",
+      "Tự gọi tổng đài chính thức của ngân hàng.",
+      "Kiểm tra kỹ tên miền website.",
+    ],
+    note: "Ví dụ: đúng là vietcombank.com.vn, giả có thể là vietcombank-security.com.",
+  },
+  {
+    title: "Giả mạo công an, viện kiểm sát",
+    summary: "Tự xưng cơ quan chức năng, đe dọa bắt giữ và ép chuyển tiền.",
+    examples: [
+      "Bạn liên quan đến đường dây rửa tiền. Chúng tôi yêu cầu chuyển toàn bộ tiền sang tài khoản điều tra.",
+    ],
+    signs: [
+      "Gọi điện tự xưng công an.",
+      "Đe dọa bắt giữ.",
+      "Yêu cầu giữ bí mật.",
+      "Bắt chuyển tiền để chứng minh vô tội.",
+    ],
+    facts: [
+      "Cơ quan chức năng không yêu cầu chuyển tiền qua điện thoại.",
+      "Không điều tra qua Zalo.",
+      "Không yêu cầu cung cấp OTP.",
+    ],
+    defenses: [
+      "Cúp máy ngay.",
+      "Gọi trực tiếp cơ quan công an địa phương để xác minh.",
+    ],
+  },
+  {
+    title: "Tuyển dụng online lương cao",
+    summary: "Việc nhẹ lương cao, yêu cầu nộp phí hoặc làm nhiệm vụ nạp tiền.",
+    examples: ["Làm việc tại nhà, 500.000 - 2.000.000đ/ngày."],
+    signs: [
+      "Không cần kinh nghiệm.",
+      "Lương quá cao.",
+      "Bắt nộp phí trước.",
+      "Yêu cầu làm nhiệm vụ để nhận thưởng.",
+    ],
+    tactics: [
+      "Nạp 100.000đ, hoàn lại 120.000đ.",
+      "Nạp 500.000đ, hoàn lại 600.000đ.",
+      "Sau đó yêu cầu nạp 5 triệu, 10 triệu và không cho rút tiền.",
+    ],
+    defenses: [
+      "Không chuyển tiền để được nhận việc.",
+      "Tìm hiểu công ty trước khi ứng tuyển.",
+    ],
+  },
+  {
+    title: "Lừa đảo đầu tư tài chính",
+    summary: "Cam kết lợi nhuận cao, không rủi ro, rút tiền khó hoặc phải mời người mới.",
+    examples: ["Đầu tư AI mới, lợi nhuận 5% mỗi ngày."],
+    signs: [
+      "Cam kết lợi nhuận.",
+      "Nói rằng không có rủi ro.",
+      "Rút tiền khó khăn.",
+      "Tập trung vào việc giới thiệu người mới.",
+    ],
+    facts: ["Tiền của người đến sau trả cho người đến trước. Đây là mô hình Ponzi."],
+    defenses: [
+      "Nếu lợi nhuận nghe quá tốt để là sự thật thì thường là lừa đảo.",
+      "Kiểm tra xem tổ chức có được cấp phép hay không.",
+    ],
+  },
+  {
+    title: "Mạo danh người thân",
+    summary: "Dùng tài khoản bị chiếm hoặc tài khoản mới để nhắn vay tiền gấp.",
+    examples: ["Mẹ ơi con đang cần chuyển gấp 8 triệu."],
+    signs: [
+      "Tài khoản mới lập.",
+      "Tin nhắn bất thường.",
+      "Thúc giục chuyển tiền ngay.",
+    ],
+    defenses: [
+      "Gọi video hoặc gọi điện xác nhận.",
+      "Không dựa hoàn toàn vào tin nhắn.",
+    ],
+  },
+  {
+    title: "Trúng thưởng giả",
+    summary: "Báo trúng thưởng dù bạn không tham gia, rồi yêu cầu đóng phí nhận thưởng.",
+    examples: ["Chúc mừng bạn đã trúng xe máy SH trị giá 90 triệu đồng."],
+    signs: [
+      "Chưa từng tham gia chương trình.",
+      "Yêu cầu đóng phí nhận thưởng.",
+      "Yêu cầu cung cấp thông tin cá nhân.",
+    ],
+    facts: ["Người trúng thưởng thật không phải trả phí để nhận thưởng."],
+  },
+  {
+    title: "Link giả mạo (Phishing)",
+    summary: "Tên miền gần giống website thật để đánh cắp tài khoản, email hoặc ngân hàng.",
+    examples: ["Xem hóa đơn điện tại đây: dienluc-vn.com thay vì evn.com.vn."],
+    signs: [
+      "Tên miền gần giống.",
+      "Chứa nhiều dấu gạch ngang.",
+      "Rút gọn link bất thường.",
+    ],
+    targets: [
+      "Đánh cắp tài khoản ngân hàng.",
+      "Đánh cắp Facebook.",
+      "Đánh cắp email.",
+    ],
+    defenses: [
+      "Không đăng nhập từ link nhận qua SMS hoặc Messenger.",
+      "Tự gõ địa chỉ website chính thức.",
+    ],
+  },
+  {
+    title: "Lừa đảo giao hàng",
+    summary: "Giả shipper hoặc đơn hàng để dụ quét QR, bấm link thanh toán lạ.",
+    examples: ["Anh/chị có đơn hàng chưa thanh toán 25.000đ."],
+    signs: [
+      "Bạn không đặt hàng.",
+      "Yêu cầu quét QR.",
+      "Gửi link thanh toán lạ.",
+    ],
+    defenses: [
+      "Kiểm tra trên ứng dụng mua sắm.",
+      "Không quét QR từ nguồn không tin cậy.",
+    ],
+  },
+  {
+    title: "Chiếm đoạt Facebook, Zalo",
+    summary: "Giả cảnh báo vi phạm để dụ đăng nhập vào trang giả.",
+    examples: [
+      "Tài khoản của bạn vi phạm tiêu chuẩn cộng đồng. Nhấn vào đây để xác minh.",
+    ],
+    signs: [
+      "Tin nhắn từ fanpage lạ.",
+      "Link đăng nhập giả.",
+      "Yêu cầu nhập mật khẩu.",
+    ],
+    defenses: [
+      "Bật xác thực hai lớp (2FA).",
+      "Không đăng nhập qua liên kết gửi riêng.",
+    ],
+  },
+  {
+    title: "Romance Scam (Lừa đảo tình cảm)",
+    summary: "Làm quen lâu ngày, tạo niềm tin rồi dựng chuyện cần tiền.",
+    examples: [
+      "Đang bị tai nạn, cần tiền viện phí.",
+      "Gửi quà nhưng cần đóng thuế.",
+    ],
+    signs: [
+      "Yêu nhanh bất thường.",
+      "Tránh gặp mặt.",
+      "Cuối cùng luôn nhắc đến tiền.",
+    ],
+    defenses: [
+      "Không gửi tiền cho người chưa gặp ngoài đời.",
+      "Cảnh giác với các câu chuyện quá hoàn hảo.",
+    ],
+  },
+  {
+    title: "Scam AI",
+    summary: "Dùng AI giả giọng người thân hoặc video deepfake để tạo áp lực chuyển tiền.",
+    examples: [
+      "Mẹ ơi con bị tai nạn, chuyển tiền giúp con.",
+      "Cuộc gọi video deepfake giả người quen.",
+    ],
+    signs: [
+      "Cuộc gọi ngắn.",
+      "Âm thanh hơi méo.",
+      "Thúc giục chuyển tiền ngay.",
+    ],
+    defenses: [
+      "Gọi lại bằng số quen thuộc.",
+      "Đặt mật khẩu gia đình để xác thực.",
+    ],
+  },
+  {
+    title: "Dấu hiệu đỏ và quy tắc 30 giây",
+    summary: "Những tín hiệu xuất hiện trong hầu hết các vụ lừa đảo.",
+    signs: [
+      "Yêu cầu chuyển tiền ngay.",
+      "Bảo giữ bí mật.",
+      "Đòi OTP.",
+      "Hứa lợi nhuận cao.",
+      "Đe dọa khóa tài khoản.",
+      "Tạo áp lực thời gian.",
+      "Yêu cầu cài ứng dụng lạ.",
+      "Yêu cầu truy cập từ xa vào điện thoại hoặc máy tính.",
+      "Yêu cầu cung cấp CCCD, ảnh khuôn mặt, thông tin ngân hàng.",
+    ],
+    defenses: [
+      "Dừng lại 30 giây.",
+      "Không bấm link ngay.",
+      "Không cung cấp OTP.",
+      "Xác minh bằng kênh chính thức.",
+      "Hỏi ý kiến người thân nếu thấy áp lực hoặc hoang mang.",
+    ],
+    note: "Chỉ cần tuân thủ 5 bước này, bạn có thể tránh được phần lớn các hình thức lừa đảo phổ biến hiện nay.",
+  },
+];
+
 let historyData = JSON.parse(localStorage.getItem("scamcheck_history")) || [];
 
 function saveHistory() {
@@ -17,13 +229,18 @@ const screens = {
   loading: document.getElementById("loadingScreen"),
   result: document.getElementById("resultScreen"),
   history: document.getElementById("historyScreen"),
+  library: document.getElementById("libraryScreen"),
 };
 
 const messageInput = document.getElementById("messageInput");
 const analyzeBtn = document.getElementById("analyzeBtn");
 const openHistoryBtn = document.getElementById("openHistoryBtn");
 const closeHistoryBtn = document.getElementById("closeHistoryBtn");
+const openLibraryBtn = document.getElementById("openLibraryBtn");
+const closeLibraryBtn = document.getElementById("closeLibraryBtn");
 const backHomeBtn = document.getElementById("backHomeBtn");
+const resultShareUrl = document.getElementById("resultShareUrl");
+const copyShareUrlBtn = document.getElementById("copyShareUrlBtn");
 
 function showScreen(name) {
   Object.values(screens).forEach((screen) => screen.classList.remove("active"));
@@ -147,6 +364,10 @@ function renderResult(text, aiResult = null, shouldSaveHistory = true) {
 
   riskDescription.textContent = aiResult?.description || descriptions[level];
 
+  if (resultShareUrl) {
+    resultShareUrl.value = aiResult?.result_url || "";
+  }
+
   const signCard = document.getElementById("signCard");
   const suspiciousCard = document.getElementById("suspiciousCard");
   const counselorCard = document.querySelector(".counselor-card");
@@ -182,7 +403,7 @@ function renderResult(text, aiResult = null, shouldSaveHistory = true) {
 
     document.getElementById("counselorText").textContent =
       aiResult?.counselor ||
-      "Bác hãy bình tĩnh, đừng bấm vào liên kết và cũng đừng chuyển tiền. Hãy hỏi người thân hoặc gọi tổng đài chính thức để kiểm tra lại nhé.";
+      "Con hãy bình tĩnh, đừng bấm vào liên kết và cũng đừng chuyển tiền. Hãy hỏi người thân hoặc gọi tổng đài chính thức để kiểm tra lại nhé.";
   }
 
   const actions = shouldShowWarningDetails
@@ -221,6 +442,70 @@ function renderResult(text, aiResult = null, shouldSaveHistory = true) {
     historyData = historyData.slice(0, 10);
     saveHistory();
   }
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function renderLibrarySection(title, items, className = "") {
+  if (!items || items.length === 0) return "";
+
+  return `
+    <div class="library-section ${className}">
+      <h3>${escapeHtml(title)}</h3>
+      <ul>
+        ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+      </ul>
+    </div>
+  `;
+}
+
+function renderScamLibrary() {
+  const libraryList = document.getElementById("libraryList");
+
+  libraryList.innerHTML = scamLibrary
+    .map(
+      (item, index) => `
+        <article class="library-item">
+          <button class="library-toggle" type="button" aria-expanded="false" data-index="${index}">
+            <span class="library-toggle-title">
+              <strong>${index + 1}. ${escapeHtml(item.title)}</strong>
+              <span>${escapeHtml(item.summary)}</span>
+            </span>
+            <span class="library-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="library-detail">
+            ${renderLibrarySection("Ví dụ", item.examples, "library-example")}
+            ${renderLibrarySection("Dấu hiệu nhận biết", item.signs)}
+            ${renderLibrarySection("Chiêu thức thường gặp", item.tactics)}
+            ${renderLibrarySection("Mục tiêu của kẻ gian", item.targets)}
+            ${renderLibrarySection("Sự thật / Quy tắc vàng", item.facts, "library-rule")}
+            ${renderLibrarySection("Cách phòng tránh", item.defenses)}
+            ${
+              item.note
+                ? `<div class="library-section library-rule"><h3>Ghi nhớ</h3><p>${escapeHtml(item.note)}</p></div>`
+                : ""
+            }
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+
+  document.querySelectorAll(".library-toggle").forEach((button) => {
+    button.addEventListener("click", () => {
+      const item = button.closest(".library-item");
+      const isOpen = item.classList.toggle("open");
+
+      button.setAttribute("aria-expanded", String(isOpen));
+    });
+  });
 }
 
 function renderHistory() {
@@ -326,6 +611,48 @@ async function analyzeWithAI(text) {
   }
 }
 
+async function sendAlert(message, resultId = "") {
+  try {
+    await fetch("/send-alert", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        result_id: resultId,
+      }),
+    });
+  } catch (error) {
+    console.warn("Could not send alert", error);
+  }
+}
+
+async function loadSharedResultFromUrl() {
+  const match = window.location.pathname.match(/^\/r\/([^/]+)$/);
+
+  if (!match) return;
+
+  showScreen("loading");
+
+  try {
+    const response = await fetch(`/api/results/${encodeURIComponent(match[1])}`);
+    const saved = await response.json();
+
+    if (!response.ok) {
+      throw new Error(saved.error || "Không tìm thấy kết quả đã lưu.");
+    }
+
+    const savedResult = saved.result || {};
+    savedResult.result_id = saved.id;
+    savedResult.result_url = window.location.href;
+
+    renderResult(saved.message || "", savedResult, false);
+    showScreen("result");
+  } catch (error) {
+    alert(error.message || "Không thể tải kết quả đã lưu.");
+    showScreen("home");
+  }
+}
+
 analyzeBtn.addEventListener("click", async () => {
   const text = messageInput.value.trim();
 
@@ -348,6 +675,7 @@ analyzeBtn.addEventListener("click", async () => {
   try {
     const aiResult = await analyzeWithAI(text);
     renderResult(text, aiResult, true);
+    sendAlert("Someone submitted a scam check", aiResult.result_id || "");
     showScreen("result");
   } catch (error) {
     console.warn(error);
@@ -365,7 +693,13 @@ openHistoryBtn.addEventListener("click", () => {
   showScreen("history");
 });
 
+openLibraryBtn.addEventListener("click", () => {
+  renderScamLibrary();
+  showScreen("library");
+});
+
 closeHistoryBtn.addEventListener("click", () => showScreen("home"));
+closeLibraryBtn.addEventListener("click", () => showScreen("home"));
 backHomeBtn.addEventListener("click", () => showScreen("home"));
 let latestMessage = "";
 let latestResult = null;
@@ -619,3 +953,26 @@ if (createWarningCardBtn) {
 if (downloadWarningCardBtn) {
   downloadWarningCardBtn.addEventListener("click", downloadWarningCard);
 }
+
+if (copyShareUrlBtn && resultShareUrl) {
+  copyShareUrlBtn.addEventListener("click", async () => {
+    if (!resultShareUrl.value) {
+      alert("Chưa có link kết quả để sao chép.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(resultShareUrl.value);
+      copyShareUrlBtn.textContent = "Đã sao chép";
+
+      setTimeout(() => {
+        copyShareUrlBtn.textContent = "Sao chép";
+      }, 1600);
+    } catch {
+      resultShareUrl.select();
+      document.execCommand("copy");
+    }
+  });
+}
+
+loadSharedResultFromUrl();
