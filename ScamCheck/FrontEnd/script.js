@@ -71,7 +71,8 @@ const scamLibrary = [
   },
   {
     title: "Lừa đảo đầu tư tài chính",
-    summary: "Cam kết lợi nhuận cao, không rủi ro, rút tiền khó hoặc phải mời người mới.",
+    summary:
+      "Cam kết lợi nhuận cao, không rủi ro, rút tiền khó hoặc phải mời người mới.",
     examples: ["Đầu tư AI mới, lợi nhuận 5% mỗi ngày."],
     signs: [
       "Cam kết lợi nhuận.",
@@ -79,7 +80,9 @@ const scamLibrary = [
       "Rút tiền khó khăn.",
       "Tập trung vào việc giới thiệu người mới.",
     ],
-    facts: ["Tiền của người đến sau trả cho người đến trước. Đây là mô hình Ponzi."],
+    facts: [
+      "Tiền của người đến sau trả cho người đến trước. Đây là mô hình Ponzi.",
+    ],
     defenses: [
       "Nếu lợi nhuận nghe quá tốt để là sự thật thì thường là lừa đảo.",
       "Kiểm tra xem tổ chức có được cấp phép hay không.",
@@ -101,7 +104,8 @@ const scamLibrary = [
   },
   {
     title: "Trúng thưởng giả",
-    summary: "Báo trúng thưởng dù bạn không tham gia, rồi yêu cầu đóng phí nhận thưởng.",
+    summary:
+      "Báo trúng thưởng dù bạn không tham gia, rồi yêu cầu đóng phí nhận thưởng.",
     examples: ["Chúc mừng bạn đã trúng xe máy SH trị giá 90 triệu đồng."],
     signs: [
       "Chưa từng tham gia chương trình.",
@@ -112,7 +116,8 @@ const scamLibrary = [
   },
   {
     title: "Link giả mạo (Phishing)",
-    summary: "Tên miền gần giống website thật để đánh cắp tài khoản, email hoặc ngân hàng.",
+    summary:
+      "Tên miền gần giống website thật để đánh cắp tài khoản, email hoặc ngân hàng.",
     examples: ["Xem hóa đơn điện tại đây: dienluc-vn.com thay vì evn.com.vn."],
     signs: [
       "Tên miền gần giống.",
@@ -178,7 +183,8 @@ const scamLibrary = [
   },
   {
     title: "Scam AI",
-    summary: "Dùng AI giả giọng người thân hoặc video deepfake để tạo áp lực chuyển tiền.",
+    summary:
+      "Dùng AI giả giọng người thân hoặc video deepfake để tạo áp lực chuyển tiền.",
     examples: [
       "Mẹ ơi con bị tai nạn, chuyển tiền giúp con.",
       "Cuộc gọi video deepfake giả người quen.",
@@ -234,8 +240,6 @@ const screens = {
 
 const messageInput = document.getElementById("messageInput");
 const analyzeBtn = document.getElementById("analyzeBtn");
-const websiteUrlInput = document.getElementById("websiteUrlInput");
-const analyzeWebsiteBtn = document.getElementById("analyzeWebsiteBtn");
 const openHistoryBtn = document.getElementById("openHistoryBtn");
 const closeHistoryBtn = document.getElementById("closeHistoryBtn");
 const openLibraryBtn = document.getElementById("openLibraryBtn");
@@ -243,7 +247,40 @@ const closeLibraryBtn = document.getElementById("closeLibraryBtn");
 const backHomeBtn = document.getElementById("backHomeBtn");
 const resultShareUrl = document.getElementById("resultShareUrl");
 const copyShareUrlBtn = document.getElementById("copyShareUrlBtn");
+const websiteUrlInput = document.getElementById("websiteUrlInput");
 
+const analyzeWebsiteBtn = document.getElementById("analyzeWebsiteBtn");
+if (analyzeWebsiteBtn) {
+  analyzeWebsiteBtn.addEventListener("click", async () => {
+    const url = websiteUrlInput.value.trim();
+
+    if (!url) {
+      alert("Nhập website cần kiểm tra.");
+      return;
+    }
+
+    showScreen("loading");
+
+    try {
+      const response = await fetch("/analyze-website", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
+      });
+
+      const result = await response.json();
+
+      renderResult(`Website: ${url}`, result, true);
+
+      showScreen("result");
+    } catch (error) {
+      alert("Không thể kiểm tra website.");
+      showScreen("home");
+    }
+  });
+}
 function showScreen(name) {
   Object.values(screens).forEach((screen) => screen.classList.remove("active"));
   screens[name].classList.add("active");
@@ -373,7 +410,7 @@ function renderResult(text, aiResult = null, shouldSaveHistory = true) {
   const signCard = document.getElementById("signCard");
   const suspiciousCard = document.getElementById("suspiciousCard");
   const counselorCard = document.querySelector(".counselor-card");
-
+  const choiceCard = document.getElementById("ChoiceCard");
   if (signCard) {
     signCard.style.display = shouldShowWarningDetails ? "block" : "none";
   }
@@ -385,7 +422,9 @@ function renderResult(text, aiResult = null, shouldSaveHistory = true) {
   if (counselorCard) {
     counselorCard.style.display = shouldShowWarningDetails ? "flex" : "none";
   }
-
+  if (choiceCard) {
+    choiceCard.style.display = shouldShowWarningDetails ? "block" : "none";
+  }
   if (shouldShowWarningDetails) {
     const signs = aiResult?.signs || [
       "Có yếu tố thúc giục hoặc gây áp lực thời gian.",
@@ -613,40 +652,6 @@ async function analyzeWithAI(text) {
   }
 }
 
-async function analyzeWebsite(url) {
-  try {
-    const response = await fetch("/analyze-website", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-    });
-
-    const rawBody = await response.text();
-    let data;
-
-    try {
-      data = rawBody ? JSON.parse(rawBody) : {};
-    } catch {
-      throw new Error(
-        rawBody.slice(0, 220) ||
-          "Backend returned an empty website scan response.",
-      );
-    }
-
-    if (!response.ok) {
-      throw new Error(data.error || "Could not scan this website.");
-    }
-
-    return data;
-  } catch (error) {
-    if (!navigator.onLine) {
-      throw new Error("Bạn đang mất kết nối mạng. Hãy kiểm tra Internet rồi thử lại.");
-    }
-
-    throw error;
-  }
-}
-
 async function sendAlert(message, resultId = "") {
   try {
     await fetch("/send-alert", {
@@ -670,7 +675,9 @@ async function loadSharedResultFromUrl() {
   showScreen("loading");
 
   try {
-    const response = await fetch(`/api/results/${encodeURIComponent(match[1])}`);
+    const response = await fetch(
+      `/api/results/${encodeURIComponent(match[1])}`,
+    );
     const saved = await response.json();
 
     if (!response.ok) {
@@ -723,31 +730,6 @@ analyzeBtn.addEventListener("click", async () => {
     showScreen("result");
   }
 });
-
-if (analyzeWebsiteBtn && websiteUrlInput) {
-  analyzeWebsiteBtn.addEventListener("click", async () => {
-    const url = websiteUrlInput.value.trim();
-
-    if (!url) {
-      showFriendlyError("Bạn chưa nhập URL website cần kiểm tra.");
-      return;
-    }
-
-    showScreen("loading");
-
-    try {
-      const websiteResult = await analyzeWebsite(url);
-      const source = websiteResult.website?.final_url || url;
-
-      renderResult(source, websiteResult, true);
-      sendAlert("Someone submitted a website scam check", websiteResult.result_id || "");
-      showScreen("result");
-    } catch (error) {
-      alert(error.message || "Không thể kiểm tra website này. Bạn hãy thử lại.");
-      showScreen("home");
-    }
-  });
-}
 
 openHistoryBtn.addEventListener("click", () => {
   renderHistory();
@@ -1037,3 +1019,22 @@ if (copyShareUrlBtn && resultShareUrl) {
 }
 
 loadSharedResultFromUrl();
+document.querySelectorAll(".choice-button").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".choice-button").forEach((btn) => {
+      btn.classList.remove("selected");
+    });
+
+    button.classList.add("selected");
+
+    const outcomes = {
+      None: "Tốt rồi. Bạn chưa làm gì nên nguy cơ hiện tại thấp. Hãy xóa tin nhắn và không phản hồi.",
+      Link: "Bạn nên đổi mật khẩu nếu đã đăng nhập, không nhập thêm thông tin và kiểm tra thiết bị.",
+      Send: "Bạn cần liên hệ ngân hàng ngay để yêu cầu hỗ trợ khóa giao dịch hoặc tài khoản.",
+      Otp: "Bạn cần đổi mật khẩu, khóa tài khoản nếu cần và liên hệ ngân hàng/cơ quan chính thức ngay.",
+    };
+
+    document.getElementById("Result").textContent =
+      outcomes[button.dataset.choice];
+  });
+});
