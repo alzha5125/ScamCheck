@@ -182,7 +182,7 @@ function renderResult(text, aiResult = null, shouldSaveHistory = true) {
 
     document.getElementById("counselorText").textContent =
       aiResult?.counselor ||
-      "Con hãy bình tĩnh, đừng bấm vào liên kết và cũng đừng chuyển tiền. Hãy hỏi người thân hoặc gọi tổng đài chính thức để kiểm tra lại nhé.";
+      "Bác hãy bình tĩnh, đừng bấm vào liên kết và cũng đừng chuyển tiền. Hãy hỏi người thân hoặc gọi tổng đài chính thức để kiểm tra lại nhé.";
   }
 
   const actions = shouldShowWarningDetails
