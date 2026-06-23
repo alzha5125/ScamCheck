@@ -1,0 +1,71 @@
+{
+  "be5bbb140e27": {
+    "id": "be5bbb140e27",
+    "message": "Chúc mừng bạn đã trúng thưởng xe SH và 100 triệu đồng. Hãy gửi phí hồ sơ 500.000đ và CCCD để nhận thưởng ngay hôm nay.",
+    "result": {
+      "level": "Nghiêm trọng",
+      "description": "Đây là tin nhắn lừa đảo rất nguy hiểm, họ đang tìm cách lừa bác gửi tiền và lấy thông tin cá nhân quan trọng.",
+      "signs": [
+        "Thông báo trúng thưởng bất ngờ mà bác không hề tham gia chương trình nào.",
+        "Yêu cầu nộp một khoản tiền (phí hồ sơ) trước khi nhận thưởng.",
+        "Yêu cầu gửi giấy tờ tùy thân quan trọng như CCCD.",
+        "Thúc giục hành động gấp gáp bằng cách nói 'nhận thưởng ngay hôm nay'."
+      ],
+      "suspicious_quote": "Hãy gửi phí hồ sơ 500.000đ và CCCD để nhận thưởng ngay hôm nay.",
+      "actions": [
+        "Tuyệt đối không làm theo bất kỳ yêu cầu nào trong tin nhắn.",
+        "Chặn ngay số điện thoại đã gửi tin nhắn này.",
+        "Xóa tin nhắn và không nhấp vào bất kỳ đường dẫn nào (nếu có).",
+        "Chia sẻ thông tin này với người thân, bạn bè để họ cùng cảnh giác."
+      ],
+      "counselor": "Kẻ lừa đảo thường đánh vào tâm lý 'trúng số', muốn có được phần thưởng lớn bất ngờ mà không cần bỏ công sức, bác ạ. Họ tạo ra cảm giác vui mừng, vội vã để bác không kịp suy nghĩ kỹ và dễ dàng làm theo yêu cầu gửi tiền hoặc thông tin cá nhân vì sợ bỏ lỡ cơ hội vàng."
+    },
+    "created_at": "2026-06-23T13:17:19.022726+00:00"
+  },
+  "80a61f9e3bf3": {
+    "id": "80a61f9e3bf3",
+    "message": "Chúc mừng bạn đã trúng thưởng xe SH và 100 triệu đồng. Hãy gửi phí hồ sơ 500.000đ và CCCD để nhận thưởng ngay hôm nay.",
+    "result": {
+      "level": "Nghiêm trọng",
+      "description": "Tin nhắn lừa đảo này đang cố gắng lấy tiền và thông tin cá nhân của bác bằng cách dụ dỗ về một món quà lớn không có thật.",
+      "signs": [
+        "Thông báo trúng thưởng mà bác không hề tham gia",
+        "Yêu cầu gửi tiền (phí hồ sơ) để nhận thưởng",
+        "Yêu cầu cung cấp giấy tờ tùy thân nhạy cảm (CCCD)",
+        "Tạo cảm giác gấp gáp, thúc giục hành động ngay lập tức"
+      ],
+      "suspicious_quote": "Hãy gửi phí hồ sơ 500.000đ và CCCD để nhận thưởng ngay hôm nay.",
+      "actions": [
+        "Tuyệt đối không gửi bất kỳ khoản tiền hay thông tin cá nhân nào.",
+        "Chặn số điện thoại gửi tin nhắn này.",
+        "Báo cáo tin nhắn lừa đảo cho nhà mạng hoặc cơ quan chức năng.",
+        "Cảnh báo người thân, bạn bè về hình thức lừa đảo này."
+      ],
+      "counselor": "Bác ơi, đây là chiêu lừa đảo đánh vào lòng tham và sự bất ngờ của mình đó ạ. Kẻ xấu thường đưa ra những phần thưởng rất lớn để bác tin là thật, rồi yêu cầu một khoản phí nhỏ cùng giấy tờ để bác dễ dàng làm theo, nhằm mục đích lấy tiền và thông tin cá nhân của bác đó."
+    },
+    "created_at": "2026-06-20T14:05:31.898512+00:00"
+  },
+  "4b0446925dab": {
+    "id": "4b0446925dab",
+    "message": "Tôi là cán bộ công an. Anh/chị đang liên quan đến đường dây rửa tiền. Chuyển ngay 20 triệu vào tài khoản này để phục vụ điều tra, nếu không sẽ bị bắt giam.",
+    "result": {
+      "level": "Nghiêm trọng",
+      "description": "Đây là tin nhắn lừa đảo giả danh công an để hù dọa và yêu cầu bác chuyển tiền. Tuyệt đối không làm theo.",
+      "signs": [
+        "Giả danh công an, cơ quan chức năng để hù dọa",
+        "Yêu cầu chuyển tiền ngay lập tức vào một tài khoản không rõ ràng",
+        "Đe dọa sẽ bị bắt giam nếu không làm theo",
+        "Tạo áp lực tâm lý, sự hoang mang, sợ hãi để ép buộc"
+      ],
+      "suspicious_quote": "Chuyển ngay 20 triệu vào tài khoản này để phục vụ điều tra, nếu không sẽ bị bắt giam.",
+      "actions": [
+        "Tuyệt đối không làm theo yêu cầu chuyển tiền trong tin nhắn.",
+        "Không cung cấp bất kỳ thông tin cá nhân nào (số tài khoản, mật khẩu, mã OTP) cho người lạ.",
+        "Liên hệ trực tiếp với công an tại đồn hoặc gọi 113 để xác minh (công an thật sẽ không yêu cầu chuyển tiền qua điện thoại/tin nhắn).",
+        "Chặn số điện thoại hoặc tài khoản gửi tin nhắn này và báo cáo nếu có thể."
+      ],
+      "counselor": "Bác ơi, đây là chiêu lừa đảo mà bọn xấu hay dùng để lợi dụng sự lo lắng, sợ hãi của mình đó ạ. Kẻ xấu thường giả danh công an để dọa dẫm bác dính líu đến chuyện sai trái, rồi yêu cầu chuyển tiền gấp để phục vụ điều tra. Công an thật sẽ không bao giờ làm việc hay yêu cầu mình chuyển tiền qua điện thoại hoặc tin nhắn như thế đâu bác nhé, con mong bác hãy thật cẩn thận!"
+    },
+    "created_at": "2026-06-20T08:07:28.503589+00:00"
+  }
+}

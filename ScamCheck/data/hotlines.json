@@ -1,0 +1,26 @@
+{
+  "contacts": [
+    { "name": "Vietcombank", "phone": "1900 54 54 13", "type": "bank" },
+    { "name": "BIDV", "phone": "1900 9247", "type": "bank" },
+    { "name": "VietinBank", "phone": "1900 558 868", "type": "bank" },
+    { "name": "Techcombank", "phone": "1800 588 822", "type": "bank" },
+    { "name": "VPBank", "phone": "1900 545 415", "type": "bank" },
+    { "name": "MB Bank", "phone": "1900 545426", "type": "bank" },
+    { "name": "Sacombank", "phone": "1800 5858 88", "type": "bank" },
+    { "name": "TPBank", "phone": "1900 60 36", "type": "bank" },
+    { "name": "HDBank", "phone": "1900 6060", "type": "bank" },
+    { "name": "Agribank", "phone": "1900 558818", "type": "bank" },
+
+    { "name": "Công an khẩn cấp", "phone": "113", "type": "police" },
+    {
+      "name": "Phản ánh lừa đảo, cuộc gọi rác",
+      "phone": "156",
+      "type": "cyber"
+    },
+    {
+      "name": "Phản ánh tin nhắn/cuộc gọi rác",
+      "phone": "5656",
+      "type": "cyber"
+    }
+  ]
+}
