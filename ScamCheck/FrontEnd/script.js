@@ -1058,12 +1058,10 @@ document.querySelectorAll(".choice-button").forEach((button) => {
       }
 
       resultBox.innerHTML = `
-        <ol class="rescue-steps">
-          ${(data.steps || [])
-            .map((step) => `<li>${escapeHtml(step)}</li>`)
-            .join("")}
-        </ol>
-      `;
+  <ol class="rescue-steps">
+    ${(data.steps || []).map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
+  </ol>
+`;
     } catch (error) {
       resultBox.textContent =
         "Không thể gọi Người ứng cứu lúc này. Hãy liên hệ ngay ngân hàng hoặc cơ quan chức năng chính thức.";
