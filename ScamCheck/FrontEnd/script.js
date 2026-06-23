@@ -1059,7 +1059,12 @@ document.querySelectorAll(".choice-button").forEach((button) => {
 
       resultBox.innerHTML = `
   <ol class="rescue-steps">
-    ${(data.steps || []).map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
+    ${(data.steps || [])
+      .map((step) => {
+        const cleanStep = String(step).replace(/^\d+\.\s*/, "");
+        return `<li>${escapeHtml(cleanStep)}</li>`;
+      })
+      .join("")}
   </ol>
 `;
     } catch (error) {
