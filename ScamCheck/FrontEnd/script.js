@@ -519,7 +519,7 @@ function renderScamLibrary() {
               <strong>${index + 1}. ${escapeHtml(item.title)}</strong>
               <span>${escapeHtml(item.summary)}</span>
             </span>
-            <span class="library-chevron" aria-hidden="true">⌄</span>
+            <span class="library-chevron" aria-hidden="true">▼</span>
           </button>
           <div class="library-detail">
             ${renderLibrarySection("Ví dụ", item.examples, "library-example")}
