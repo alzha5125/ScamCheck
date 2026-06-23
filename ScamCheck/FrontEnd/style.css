@@ -406,20 +406,16 @@ button {
 }
 
 .library-chevron {
-  width: 42px;
-  height: 42px;
-
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-
+  line-height: 1;
   border-radius: 999px;
   background: var(--blue-soft);
-
-  font-size: 22px;
-  line-height: 1;
-
   color: var(--blue-dark);
+  font-size: 16px;
 }
 
 .library-item.open .library-chevron {
@@ -687,7 +683,7 @@ footer {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 14px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
