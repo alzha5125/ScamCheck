@@ -143,7 +143,7 @@ textarea:focus {
 button {
   border: none;
   cursor: pointer;
-  font-weight: 700;
+  font-weight: 600;
   border-radius: 18px;
   font-size: 18px;
 }
@@ -406,16 +406,20 @@ button {
 }
 
 .library-chevron {
-  flex: 0 0 auto;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   border-radius: 999px;
   background: var(--blue-soft);
-  color: var(--blue-dark);
+
   font-size: 22px;
-  transition: transform 0.2s ease;
+  line-height: 1;
+
+  color: var(--blue-dark);
 }
 
 .library-item.open .library-chevron {
@@ -725,4 +729,15 @@ footer {
   .url-row {
     flex-direction: column;
   }
+}
+.rescue-steps {
+  margin-top: 18px;
+  padding-left: 24px;
+}
+
+.rescue-steps li {
+  margin-bottom: 14px;
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.65;
 }
