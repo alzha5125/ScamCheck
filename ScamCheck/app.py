@@ -13,7 +13,7 @@ APP_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = APP_DIR / ".gitignore" / "config.json"
 DATA_DIR = APP_DIR / "data"
 RESULTS_PATH = DATA_DIR / "results.json"
-
+HOTLINES_PATH = DATA_DIR / "hotlines.json"
 from pathlib import Path
 
 APP_DIR = Path(__file__).resolve().parent
@@ -146,7 +146,115 @@ def send_alert():
     )
 
     return jsonify({"ok": True})
+def load_hotlines():
+    if not HOTLINES_PATH.exists():
+        return {"contacts": []}
 
+    with open(HOTLINES_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    return data if isinstance(data, dict) else {"contacts": []}
+
+
+def fallback_rescue_steps(choice, contacts):
+    banks = [c for c in contacts if c.get("type") == "bank"]
+    police = next((c for c in contacts if c.get("type") == "police"), {"name": "Công an khẩn cấp", "phone": "113"})
+    cyber = next((c for c in contacts if c.get("phone") == "156"), {"name": "Phản ánh lừa đảo", "phone": "156"})
+
+    bank = banks[0] if banks else {"name": "ngân hàng của bạn", "phone": ""}
+
+    if choice == "Link":
+        return [
+            f"1. Ngắt kết nối khỏi trang vừa mở. Câu nói mẫu: Tôi vừa bấm vào một đường dẫn nghi ngờ lừa đảo, xin hướng dẫn cách khóa tài khoản và kiểm tra giao dịch.",
+            f"2. Gọi {bank['name']} theo số {bank['phone']}. Câu nói mẫu: Tôi cần kiểm tra tài khoản vì vừa truy cập đường dẫn lạ.",
+            f"3. Gọi {cyber['phone']} để phản ánh đường dẫn lừa đảo. Câu nói mẫu: Tôi muốn phản ánh một đường dẫn nghi ngờ lừa đảo trực tuyến.",
+        ]
+
+    if choice == "Send":
+        return [
+            f"1. Gọi ngay ngân hàng đang dùng, ưu tiên {bank['name']} số {bank['phone']}. Câu nói mẫu: Tôi vừa chuyển tiền nhầm cho đối tượng nghi lừa đảo, xin hỗ trợ tra soát và khóa giao dịch.",
+            f"2. Chuẩn bị mã giao dịch, số tài khoản nhận tiền, thời gian chuyển tiền. Câu nói mẫu: Tôi có mã giao dịch và thông tin người nhận, xin ghi nhận khẩn cấp.",
+            f"3. Gọi {police['phone']}. Câu nói mẫu: Tôi muốn trình báo việc bị lừa chuyển tiền qua mạng.",
+        ]
+
+    if choice == "Otp":
+        return [
+            f"1. Gọi ngay ngân hàng đang dùng, ưu tiên {bank['name']} số {bank['phone']}. Câu nói mẫu: Tôi đã cung cấp mã OTP cho người lạ, xin khóa tài khoản và dịch vụ ngân hàng số ngay.",
+            f"2. Yêu cầu khóa thẻ, khóa Internet Banking và kiểm tra giao dịch mới nhất. Câu nói mẫu: Xin kiểm tra toàn bộ giao dịch phát sinh trong hôm nay.",
+            f"3. Gọi {police['phone']}. Câu nói mẫu: Tôi muốn trình báo việc bị chiếm đoạt thông tin xác thực ngân hàng.",
+        ]
+
+    return []
+
+
+@app.route("/rescue", methods=["POST"])
+def rescue():
+    data = request.get_json(silent=True) or {}
+    choice = (data.get("choice") or "").strip()
+    message = (data.get("message") or "").strip()
+    result = data.get("result") or {}
+
+    hotlines = load_hotlines()
+    contacts = hotlines.get("contacts", [])
+
+    if choice == "None":
+        return jsonify({
+            "steps": [
+                "Tốt. Bạn chưa làm gì nên nguy cơ hiện tại thấp. Hãy xóa tin nhắn và không phản hồi."
+            ]
+        })
+
+    if choice not in ["Link", "Send", "Otp"]:
+        return jsonify({"error": "Lựa chọn không hợp lệ."}), 400
+
+    if not api_key:
+        return jsonify({"steps": fallback_rescue_steps(choice, contacts)})
+
+    system_prompt = f"""
+Bạn là nhân vật Người ứng cứu.
+
+Giọng văn: bình tĩnh, dứt khoát.
+Không an ủi. Không phân tích. Không giải thích dài.
+Chỉ liệt kê bước hành động cụ thể.
+
+Quy tắc bắt buộc:
+- Chỉ dùng số điện thoại có trong DANH_SACH_TONG_DAI.
+- Không tự sinh thêm bất kỳ số điện thoại nào.
+- Không dùng số điện thoại không có trong danh sách.
+- Kết quả trả về là danh sách bước đánh số.
+- Mỗi bước phải có một câu nói mẫu để người dùng đọc khi gọi điện.
+- Không dùng câu cảm thán.
+- Không dùng markdown.
+
+DANH_SACH_TONG_DAI:
+{json.dumps(contacts, ensure_ascii=False)}
+
+Lựa chọn của người dùng: {choice}
+
+Ngữ cảnh:
+Tin nhắn/website: {message}
+Kết quả phân tích: {json.dumps(result, ensure_ascii=False)}
+
+Hãy tạo hướng dẫn ứng cứu phù hợp với lựa chọn của người dùng.
+"""
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=system_prompt
+        )
+
+        text = (response.text or "").strip()
+
+        if not text:
+            return jsonify({"steps": fallback_rescue_steps(choice, contacts)})
+
+        steps = [line.strip() for line in text.splitlines() if line.strip()]
+
+        return jsonify({"steps": steps})
+
+    except Exception:
+        return jsonify({"steps": fallback_rescue_steps(choice, contacts)})
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
@@ -285,4 +393,4 @@ Giá trị của "level" chỉ được là một trong bốn giá trị:
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
