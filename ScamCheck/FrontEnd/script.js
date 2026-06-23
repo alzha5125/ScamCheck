@@ -1020,21 +1020,53 @@ if (copyShareUrlBtn && resultShareUrl) {
 
 loadSharedResultFromUrl();
 document.querySelectorAll(".choice-button").forEach((button) => {
-  button.addEventListener("click", () => {
+  button.addEventListener("click", async () => {
     document.querySelectorAll(".choice-button").forEach((btn) => {
       btn.classList.remove("selected");
     });
 
     button.classList.add("selected");
 
-    const outcomes = {
-      None: "Tốt rồi. Bạn chưa làm gì nên nguy cơ hiện tại thấp. Hãy xóa tin nhắn và không phản hồi.",
-      Link: "Bạn nên đổi mật khẩu nếu đã đăng nhập, không nhập thêm thông tin và kiểm tra thiết bị.",
-      Send: "Bạn cần liên hệ ngân hàng ngay để yêu cầu hỗ trợ khóa giao dịch hoặc tài khoản.",
-      Otp: "Bạn cần đổi mật khẩu, khóa tài khoản nếu cần và liên hệ ngân hàng/cơ quan chính thức ngay.",
-    };
+    const choice = button.dataset.choice;
+    const resultBox = document.getElementById("Result");
 
-    document.getElementById("Result").textContent =
-      outcomes[button.dataset.choice];
+    if (choice === "None") {
+      resultBox.innerHTML =
+        "<strong>Tốt.</strong> Bạn chưa làm gì nên nguy cơ hiện tại thấp. Hãy xóa tin nhắn và không phản hồi.";
+      return;
+    }
+
+    resultBox.textContent = "Người ứng cứu đang tạo các bước xử lý...";
+
+    try {
+      const response = await fetch("/rescue", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          choice,
+          message: latestMessage,
+          result: latestResult,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Không thể gọi Người ứng cứu.");
+      }
+
+      resultBox.innerHTML = `
+        <ol class="rescue-steps">
+          ${(data.steps || [])
+            .map((step) => `<li>${escapeHtml(step)}</li>`)
+            .join("")}
+        </ol>
+      `;
+    } catch (error) {
+      resultBox.textContent =
+        "Không thể gọi Người ứng cứu lúc này. Hãy liên hệ ngay ngân hàng hoặc cơ quan chức năng chính thức.";
+    }
   });
 });
