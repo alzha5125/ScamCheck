@@ -334,50 +334,38 @@ function classifyMessage(text) {
 
   if (lower.includes("trúng thưởng") || lower.includes("cccd")) score += 2;
 
-  if (score >= 7) return "Nghiêm trọng";
-  if (score >= 5) return "Cao";
-  if (score >= 2) return "Trung bình";
-  return "Thấp";
+  if (score >= 5) return "Nguy hiểm";
+  if (score >= 2) return "Nghi ngờ";
+  return "An toàn";
 }
 
 function levelClass(level) {
   return (
     {
-      Thấp: "low",
-      "Trung bình": "medium",
-      Cao: "high",
-      "Nghiêm trọng": "severe",
+      "An toàn": "low",
+      "Nghi ngờ": "medium",
+      "Nguy hiểm": "severe",
     }[level] || "medium"
   );
 }
 
 function riskDisplay(level) {
-  if (level === "Thấp") {
-    return {
-      label: "An toàn",
-      percent: "18%",
-    };
+  if (level === "An toàn") {
+    return { label: "An toàn", percent: "18%" };
   }
 
-  if (level === "Trung bình") {
-    return {
-      label: "Nghi ngờ",
-      percent: "55%",
-    };
+  if (level === "Nghi ngờ") {
+    return { label: "Nghi ngờ", percent: "55%" };
   }
 
-  return {
-    label: "Nguy hiểm",
-    percent: level === "Cao" ? "82%" : "100%",
-  };
+  return { label: "Nguy hiểm", percent: "100%" };
 }
 
 function renderResult(text, aiResult = null, shouldSaveHistory = true) {
   const level = aiResult?.level || classifyMessage(text);
   const type = levelClass(level);
   const displayRisk = riskDisplay(level);
-  const shouldShowWarningDetails = level !== "Thấp";
-
+  const shouldShowWarningDetails = level !== "An toàn";
   const riskCard = document.getElementById("riskCard");
   const riskTitle = document.getElementById("riskTitle");
   const riskDescription = document.getElementById("riskDescription");
@@ -393,14 +381,15 @@ function renderResult(text, aiResult = null, shouldSaveHistory = true) {
   }
 
   const descriptions = {
-    Thấp: "Tin nhắn chưa có dấu hiệu nguy hiểm rõ ràng, nhưng vẫn nên kiểm tra nguồn gửi.",
-    "Trung bình":
-      "Tin nhắn có một số điểm đáng ngờ, cần xác minh trước khi làm theo.",
-    Cao: "Tin nhắn có nhiều dấu hiệu lừa đảo và có thể gây mất tiền hoặc lộ thông tin.",
-    "Nghiêm trọng":
-      "Tin nhắn có dấu hiệu lừa đảo rất rõ, tuyệt đối không làm theo yêu cầu.",
-  };
+    "An toàn":
+      "Tin nhắn chưa có dấu hiệu nguy hiểm rõ ràng nhưng vẫn nên kiểm tra nguồn gửi.",
 
+    "Nghi ngờ":
+      "Tin nhắn có một số dấu hiệu đáng ngờ, nên xác minh trước khi làm theo.",
+
+    "Nguy hiểm":
+      "Tin nhắn có dấu hiệu lừa đảo rõ ràng. Không nên bấm link, chuyển tiền hoặc cung cấp thông tin.",
+  };
   riskDescription.textContent = aiResult?.description || descriptions[level];
 
   if (resultShareUrl) {
@@ -624,8 +613,7 @@ async function analyzeWithAI(text) {
       "counselor",
     ];
 
-    const validLevels = ["Thấp", "Trung bình", "Cao", "Nghiêm trọng"];
-
+    const validLevels = ["An toàn", "Nghi ngờ", "Nguy hiểm"];
     const isValid =
       data &&
       typeof data === "object" &&
@@ -835,10 +823,9 @@ async function createWarningCard() {
   const productUrl = "https://sc-bdwz.onrender.com";
 
   const levelColors = {
-    Thấp: "#16a34a",
-    "Trung bình": "#d49b00",
-    Cao: "#f97316",
-    "Nghiêm trọng": "#dc2626",
+    "An toàn": "#16a34a",
+    "Nghi ngờ": "#d49b00",
+    "Nguy hiểm": "#dc2626",
   };
 
   const color = levelColors[level] || "#d49b00";
