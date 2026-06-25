@@ -29,7 +29,7 @@ app = Flask(
 )
 CORS(app)
 
-VALID_LEVELS = ["Thấp", "Trung bình", "Cao", "Nghiêm trọng"]
+VALID_LEVELS = ["An toàn", "Nghi ngờ", "Nguy hiểm"]
 
 
 def load_config():
@@ -143,11 +143,11 @@ def basic_url_risk(url):
         signs.append("Tên miền dùng đuôi dễ bị lợi dụng trong lừa đảo.")
 
     if len(signs) >= 3:
-        level = "Cao"
+        level = "Nguy hiểm"
     elif len(signs) >= 1:
-        level = "Trung bình"
+        level = "Nghi ngờ"
     else:
-        level = "Thấp"
+        level = "An toàn"
 
     return level, signs
 
@@ -207,7 +207,7 @@ Chỉ trả về JSON hợp lệ, không markdown.
 
 JSON bắt buộc có đúng các khóa:
 {{
-  "level": "Thấp",
+  "level": "An toàn",
   "description": "Kết luận ngắn gọn",
   "signs": ["dấu hiệu 1", "dấu hiệu 2", "dấu hiệu 3"],
   "suspicious_quote": "đoạn hoặc URL đáng ngờ nhất",
@@ -216,7 +216,9 @@ JSON bắt buộc có đúng các khóa:
 }}
 
 Chỉ chọn level trong:
-"Thấp", "Trung bình", "Cao", "Nghiêm trọng".
+"An toàn"
+"Nghi ngờ"
+"Nguy hiểm".
 
 Thông tin website:
 URL người dùng nhập: {website_info["input_url"]}
@@ -294,12 +296,13 @@ def create_saved_result(message, result):
 
 api_key = load_api_key()
 
-if not api_key:
-    print("CẢNH BÁO: Chưa đọc được GEMINI_API_KEY")
-else:
-    print("Đã đọc được GEMINI_API_KEY")
+client = None
 
-client = genai.Client(api_key=api_key)
+if api_key:
+    print("Đã đọc được GEMINI_API_KEY")
+    client = genai.Client(api_key=api_key)
+else:
+    print("CẢNH BÁO: Chưa đọc được GEMINI_API_KEY")
 
 
 @app.route("/")
@@ -491,20 +494,18 @@ def fallback_analyze_result(message):
     if not signs:
         signs = ["Chưa phát hiện dấu hiệu nguy hiểm rõ ràng, nhưng vẫn nên xác minh nguồn gửi."]
 
-    if score >= 7:
-        level = "Nghiêm trọng"
-    elif score >= 5:
-        level = "Cao"
+    if score >= 5:
+        level = "Nguy hiểm"
     elif score >= 2:
-        level = "Trung bình"
+        level = "Nghi ngờ"
     else:
-        level = "Thấp"
+        level = "An toàn"
 
     return {
         "level": level,
         "description": "Đây là kết quả dự phòng vì AI chưa hoạt động hoặc API key bị lỗi.",
         "signs": signs,
-        "suspicious_quote": message[:180] if level != "Thấp" else "Không có đoạn nào đáng ngờ.",
+        "suspicious_quote": message[:180] if level != "An toàn" else "Không có đoạn nào đáng ngờ.",
         "actions": [
             "Không cung cấp OTP, mật khẩu hoặc thông tin cá nhân.",
             "Không chuyển tiền khi chưa xác minh rõ nguồn gửi.",
@@ -544,7 +545,7 @@ Chỉ trả về JSON hợp lệ, không markdown, không giải thích thêm.
 
 JSON bắt buộc có đúng các khóa sau:
 {{
-  "level": "Thấp",
+  "level": "An toàn",
   "description": "Kết luận ngắn gọn, dễ hiểu",
   "signs": ["dấu hiệu 1", "dấu hiệu 2", "dấu hiệu 3"],
   "suspicious_quote": "đoạn đáng ngờ nhất trong tin nhắn, nếu không có thì ghi: Không có đoạn nào đáng ngờ.",
@@ -553,13 +554,12 @@ JSON bắt buộc có đúng các khóa sau:
 }}
 
 Quy ước mức độ:
-- Thấp: chưa có dấu hiệu nguy hiểm rõ ràng.
-- Trung bình: có vài dấu hiệu đáng ngờ.
-- Cao: nhiều dấu hiệu lừa đảo, nguy cơ mất tiền/thông tin cao.
-- Nghiêm trọng: yêu cầu OTP, mật khẩu, chuyển tiền, thông tin ngân hàng/CCCD hoặc giả mạo cơ quan chức năng.
+- An toàn: chưa có dấu hiệu nguy hiểm rõ ràng.
+- Nghi ngờ: có một số dấu hiệu đáng ngờ, cần xác minh trước khi làm theo.
+- Nguy hiểm: có dấu hiệu lừa đảo rõ ràng, có thể gây mất tiền, lộ thông tin, yêu cầu OTP, mật khẩu, chuyển tiền, thông tin ngân hàng/CCCD hoặc giả mạo cơ quan chức năng.
 
-Giá trị của "level" chỉ được là một trong bốn giá trị:
-"Thấp", "Trung bình", "Cao", "Nghiêm trọng".
+Giá trị của "level" chỉ được là một trong ba giá trị:
+"An toàn", "Nghi ngờ", "Nguy hiểm".
 """
 
     try:
@@ -602,9 +602,9 @@ Giá trị của "level" chỉ được là một trong bốn giá trị:
             safe_result["result_url"] = request.host_url.rstrip("/") + f"/r/{result_id}"
             return jsonify(safe_result)
 
-        level = result.get("level", "Trung bình")
+        level = result.get("level", "Nghi ngờ")
         if level not in VALID_LEVELS:
-            level = "Trung bình"
+            level = "Nghi ngờ"
 
         signs = result.get("signs")
         if not isinstance(signs, list) or len(signs) == 0:
@@ -627,7 +627,7 @@ Giá trị của "level" chỉ được là một trong bốn giá trị:
             "signs": signs,
             "suspicious_quote": result.get(
                 "suspicious_quote",
-                message[:180] if level != "Thấp" else "Không có đoạn nào đáng ngờ."
+                message[:180] if level != "An toàn" else "Không có đoạn nào đáng ngờ."
             ),
             "actions": actions,
             "counselor": result.get(
