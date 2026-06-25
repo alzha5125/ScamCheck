@@ -244,7 +244,7 @@ button {
   background: var(--red);
   padding: 16px 22px;
   border-radius: 999px;
-  font-weight: 800;
+  font-weight: 600;
   white-space: nowrap;
 }
 
