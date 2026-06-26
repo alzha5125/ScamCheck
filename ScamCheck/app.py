@@ -27,6 +27,8 @@ app = Flask(
     static_folder=str(FRONTEND_DIR),
     static_url_path=""
 )
+
+app.json.ensure_ascii = False
 CORS(app)
 
 VALID_LEVELS = ["An toàn", "Nghi ngờ", "Nguy hiểm"]
