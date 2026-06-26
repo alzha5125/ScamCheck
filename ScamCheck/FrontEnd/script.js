@@ -8,219 +8,255 @@ const samples = {
 
 const scamLibrary = [
   {
-    title: "Giả mạo ngân hàng",
-    summary: "Dọa khóa tài khoản, báo giao dịch lạ, dụ bấm link hoặc đọc OTP.",
+    category: "Giả ngân hàng",
+    title: "Khóa tài khoản ngân hàng",
+    summary:
+      "Kẻ gian giả mạo ngân hàng, thông báo tài khoản bị khóa để dụ người dùng bấm link hoặc nhập OTP.",
     examples: [
-      "Tài khoản của quý khách sắp bị khóa. Vui lòng truy cập link dưới đây để xác thực thông tin.",
-      "Tài khoản của bạn vừa nhận 20 triệu đồng. Nếu không phải bạn thực hiện, hãy gọi ngay số này.",
+      "Tài khoản của quý khách đang bị khóa do giao dịch bất thường. Vui lòng truy cập link để xác minh.",
+      "Nếu không xác thực trong 10 phút, tài khoản ngân hàng của bạn sẽ bị tạm khóa.",
     ],
     signs: [
-      "Tạo cảm giác khẩn cấp.",
+      "Dọa khóa tài khoản.",
+      "Tạo áp lực thời gian.",
       "Yêu cầu bấm vào đường link.",
-      "Đòi mật khẩu, mã OTP.",
-      "Số điện thoại hoặc website lạ.",
+      "Đòi OTP hoặc thông tin ngân hàng.",
     ],
     defenses: [
+      "Không bấm vào link trong tin nhắn.",
       "Không cung cấp OTP cho bất kỳ ai.",
-      "Tự gọi tổng đài chính thức của ngân hàng.",
-      "Kiểm tra kỹ tên miền website.",
+      "Tự gọi tổng đài chính thức của ngân hàng để kiểm tra.",
     ],
-    note: "Ví dụ: đúng là vietcombank.com.vn, giả có thể là vietcombank-security.com.",
   },
   {
-    title: "Giả mạo công an, viện kiểm sát",
-    summary: "Tự xưng cơ quan chức năng, đe dọa bắt giữ và ép chuyển tiền.",
+    category: "Giả ngân hàng",
+    title: "Giao dịch bất thường",
+    summary:
+      "Tin nhắn giả cảnh báo có giao dịch lạ để khiến người dùng hoảng sợ và làm theo hướng dẫn.",
     examples: [
-      "Bạn liên quan đến đường dây rửa tiền. Chúng tôi yêu cầu chuyển toàn bộ tiền sang tài khoản điều tra.",
+      "Tài khoản của bạn vừa phát sinh giao dịch 20.000.000đ. Nếu không phải bạn, hãy xác minh ngay.",
+      "Hệ thống phát hiện giao dịch đáng ngờ. Vui lòng đăng nhập để kiểm tra.",
     ],
     signs: [
-      "Gọi điện tự xưng công an.",
+      "Thông báo giao dịch bất thường.",
+      "Yêu cầu xác minh gấp.",
+      "Có thể kèm link lạ.",
+      "Khiến người nhận lo sợ mất tiền.",
+    ],
+    defenses: [
+      "Mở app ngân hàng chính thức để kiểm tra.",
+      "Không đăng nhập qua link được gửi trong SMS.",
+      "Liên hệ ngân hàng bằng số tổng đài chính thức.",
+    ],
+  },
+  {
+    category: "Giả ngân hàng",
+    title: "Nâng cấp hoặc xác minh tài khoản",
+    summary:
+      "Kẻ gian yêu cầu cập nhật hồ sơ, nâng cấp tài khoản hoặc xác minh thông tin để lấy dữ liệu cá nhân.",
+    examples: [
+      "Quý khách cần cập nhật CCCD để tiếp tục sử dụng dịch vụ ngân hàng số.",
+      "Tài khoản của bạn cần được xác minh để nâng cấp bảo mật.",
+    ],
+    signs: [
+      "Yêu cầu cập nhật thông tin cá nhân.",
+      "Đòi CCCD, số tài khoản hoặc OTP.",
+      "Dùng lý do bảo mật để tạo sự tin tưởng.",
+    ],
+    defenses: [
+      "Chỉ cập nhật thông tin trên app hoặc website chính thức.",
+      "Không gửi ảnh CCCD qua tin nhắn.",
+      "Kiểm tra tên miền trước khi đăng nhập.",
+    ],
+  },
+
+  {
+    category: "Giả cơ quan công an",
+    title: "Liên quan đường dây rửa tiền",
+    summary:
+      "Kẻ gian giả danh công an, nói người dùng liên quan vụ án để đe dọa và ép chuyển tiền.",
+    examples: [
+      "Anh/chị đang liên quan đến đường dây rửa tiền. Cần chuyển tiền để phục vụ điều tra.",
+      "Tài khoản của anh/chị có dấu hiệu phạm pháp. Hãy hợp tác ngay để tránh bị bắt.",
+    ],
+    signs: [
+      "Tự xưng công an hoặc viện kiểm sát.",
       "Đe dọa bắt giữ.",
       "Yêu cầu giữ bí mật.",
-      "Bắt chuyển tiền để chứng minh vô tội.",
-    ],
-    facts: [
-      "Cơ quan chức năng không yêu cầu chuyển tiền qua điện thoại.",
-      "Không điều tra qua Zalo.",
-      "Không yêu cầu cung cấp OTP.",
+      "Ép chuyển tiền để chứng minh vô tội.",
     ],
     defenses: [
-      "Cúp máy ngay.",
-      "Gọi trực tiếp cơ quan công an địa phương để xác minh.",
+      "Cúp máy và không làm theo yêu cầu.",
+      "Không chuyển tiền cho bất kỳ tài khoản cá nhân nào.",
+      "Liên hệ công an địa phương để xác minh.",
     ],
   },
   {
-    title: "Tuyển dụng online lương cao",
-    summary: "Việc nhẹ lương cao, yêu cầu nộp phí hoặc làm nhiệm vụ nạp tiền.",
-    examples: ["Làm việc tại nhà, 500.000 - 2.000.000đ/ngày."],
-    signs: [
-      "Không cần kinh nghiệm.",
-      "Lương quá cao.",
-      "Bắt nộp phí trước.",
-      "Yêu cầu làm nhiệm vụ để nhận thưởng.",
-    ],
-    tactics: [
-      "Nạp 100.000đ, hoàn lại 120.000đ.",
-      "Nạp 500.000đ, hoàn lại 600.000đ.",
-      "Sau đó yêu cầu nạp 5 triệu, 10 triệu và không cho rút tiền.",
-    ],
-    defenses: [
-      "Không chuyển tiền để được nhận việc.",
-      "Tìm hiểu công ty trước khi ứng tuyển.",
-    ],
-  },
-  {
-    title: "Lừa đảo đầu tư tài chính",
+    category: "Giả cơ quan công an",
+    title: "Lệnh bắt giữ giả",
     summary:
-      "Cam kết lợi nhuận cao, không rủi ro, rút tiền khó hoặc phải mời người mới.",
-    examples: ["Đầu tư AI mới, lợi nhuận 5% mỗi ngày."],
-    signs: [
-      "Cam kết lợi nhuận.",
-      "Nói rằng không có rủi ro.",
-      "Rút tiền khó khăn.",
-      "Tập trung vào việc giới thiệu người mới.",
-    ],
-    facts: [
-      "Tiền của người đến sau trả cho người đến trước. Đây là mô hình Ponzi.",
-    ],
-    defenses: [
-      "Nếu lợi nhuận nghe quá tốt để là sự thật thì thường là lừa đảo.",
-      "Kiểm tra xem tổ chức có được cấp phép hay không.",
-    ],
-  },
-  {
-    title: "Mạo danh người thân",
-    summary: "Dùng tài khoản bị chiếm hoặc tài khoản mới để nhắn vay tiền gấp.",
-    examples: ["Mẹ ơi con đang cần chuyển gấp 8 triệu."],
-    signs: [
-      "Tài khoản mới lập.",
-      "Tin nhắn bất thường.",
-      "Thúc giục chuyển tiền ngay.",
-    ],
-    defenses: [
-      "Gọi video hoặc gọi điện xác nhận.",
-      "Không dựa hoàn toàn vào tin nhắn.",
-    ],
-  },
-  {
-    title: "Trúng thưởng giả",
-    summary:
-      "Báo trúng thưởng dù bạn không tham gia, rồi yêu cầu đóng phí nhận thưởng.",
-    examples: ["Chúc mừng bạn đã trúng xe máy SH trị giá 90 triệu đồng."],
-    signs: [
-      "Chưa từng tham gia chương trình.",
-      "Yêu cầu đóng phí nhận thưởng.",
-      "Yêu cầu cung cấp thông tin cá nhân.",
-    ],
-    facts: ["Người trúng thưởng thật không phải trả phí để nhận thưởng."],
-  },
-  {
-    title: "Link giả mạo (Phishing)",
-    summary:
-      "Tên miền gần giống website thật để đánh cắp tài khoản, email hoặc ngân hàng.",
-    examples: ["Xem hóa đơn điện tại đây: dienluc-vn.com thay vì evn.com.vn."],
-    signs: [
-      "Tên miền gần giống.",
-      "Chứa nhiều dấu gạch ngang.",
-      "Rút gọn link bất thường.",
-    ],
-    targets: [
-      "Đánh cắp tài khoản ngân hàng.",
-      "Đánh cắp Facebook.",
-      "Đánh cắp email.",
-    ],
-    defenses: [
-      "Không đăng nhập từ link nhận qua SMS hoặc Messenger.",
-      "Tự gõ địa chỉ website chính thức.",
-    ],
-  },
-  {
-    title: "Lừa đảo giao hàng",
-    summary: "Giả shipper hoặc đơn hàng để dụ quét QR, bấm link thanh toán lạ.",
-    examples: ["Anh/chị có đơn hàng chưa thanh toán 25.000đ."],
-    signs: [
-      "Bạn không đặt hàng.",
-      "Yêu cầu quét QR.",
-      "Gửi link thanh toán lạ.",
-    ],
-    defenses: [
-      "Kiểm tra trên ứng dụng mua sắm.",
-      "Không quét QR từ nguồn không tin cậy.",
-    ],
-  },
-  {
-    title: "Chiếm đoạt Facebook, Zalo",
-    summary: "Giả cảnh báo vi phạm để dụ đăng nhập vào trang giả.",
+      "Đối tượng gửi hoặc đọc lệnh bắt giữ giả nhằm tạo áp lực tâm lý khiến nạn nhân mất bình tĩnh.",
     examples: [
-      "Tài khoản của bạn vi phạm tiêu chuẩn cộng đồng. Nhấn vào đây để xác minh.",
+      "Chúng tôi đã có lệnh bắt giữ anh/chị. Nếu không hợp tác ngay sẽ bị xử lý.",
+      "Anh/chị phải chuyển tiền bảo lãnh trong hôm nay để được xem xét.",
     ],
     signs: [
-      "Tin nhắn từ fanpage lạ.",
-      "Link đăng nhập giả.",
-      "Yêu cầu nhập mật khẩu.",
+      "Dọa có lệnh bắt giữ.",
+      "Yêu cầu xử lý qua điện thoại.",
+      "Đòi chuyển tiền bảo lãnh.",
+      "Không cho người dùng hỏi người thân.",
     ],
     defenses: [
-      "Bật xác thực hai lớp (2FA).",
-      "Không đăng nhập qua liên kết gửi riêng.",
+      "Không trao đổi tiếp qua cuộc gọi lạ.",
+      "Không gửi giấy tờ cá nhân.",
+      "Đến trực tiếp cơ quan công an gần nhất nếu cần xác minh.",
     ],
   },
   {
-    title: "Romance Scam (Lừa đảo tình cảm)",
-    summary: "Làm quen lâu ngày, tạo niềm tin rồi dựng chuyện cần tiền.",
-    examples: [
-      "Đang bị tai nạn, cần tiền viện phí.",
-      "Gửi quà nhưng cần đóng thuế.",
-    ],
-    signs: [
-      "Yêu nhanh bất thường.",
-      "Tránh gặp mặt.",
-      "Cuối cùng luôn nhắc đến tiền.",
-    ],
-    defenses: [
-      "Không gửi tiền cho người chưa gặp ngoài đời.",
-      "Cảnh giác với các câu chuyện quá hoàn hảo.",
-    ],
-  },
-  {
-    title: "Scam AI",
+    category: "Giả cơ quan công an",
+    title: "Giả cán bộ hướng dẫn cài ứng dụng",
     summary:
-      "Dùng AI giả giọng người thân hoặc video deepfake để tạo áp lực chuyển tiền.",
+      "Kẻ gian giả danh cán bộ, yêu cầu cài ứng dụng lạ hoặc cấp quyền điều khiển điện thoại.",
     examples: [
-      "Mẹ ơi con bị tai nạn, chuyển tiền giúp con.",
-      "Cuộc gọi video deepfake giả người quen.",
+      "Anh/chị cần cài ứng dụng định danh để phục vụ điều tra.",
+      "Cài app này để chúng tôi kiểm tra tài khoản và xác minh thông tin.",
     ],
     signs: [
-      "Cuộc gọi ngắn.",
-      "Âm thanh hơi méo.",
-      "Thúc giục chuyển tiền ngay.",
+      "Yêu cầu cài ứng dụng ngoài kho chính thức.",
+      "Đòi quyền truy cập điện thoại.",
+      "Yêu cầu chia sẻ màn hình.",
+      "Có thể đánh cắp OTP hoặc tài khoản ngân hàng.",
     ],
     defenses: [
-      "Gọi lại bằng số quen thuộc.",
-      "Đặt mật khẩu gia đình để xác thực.",
+      "Không cài ứng dụng từ link lạ.",
+      "Không chia sẻ màn hình khi mở app ngân hàng.",
+      "Gỡ ứng dụng lạ nếu đã cài và đổi mật khẩu ngay.",
+    ],
+  },
+
+  {
+    category: "Trúng thưởng",
+    title: "Trúng xe máy hoặc tiền mặt",
+    summary:
+      "Tin nhắn báo trúng thưởng giá trị lớn dù người dùng không tham gia chương trình nào.",
+    examples: [
+      "Chúc mừng bạn đã trúng xe SH và 100 triệu đồng.",
+      "Bạn là khách hàng may mắn nhận giải thưởng đặc biệt hôm nay.",
+    ],
+    signs: [
+      "Báo trúng thưởng bất ngờ.",
+      "Giải thưởng có giá trị lớn.",
+      "Không nêu rõ chương trình thật.",
+      "Yêu cầu phản hồi nhanh.",
+    ],
+    defenses: [
+      "Không tin khi chưa từng tham gia chương trình.",
+      "Kiểm tra fanpage hoặc website chính thức.",
+      "Không gửi thông tin cá nhân để nhận thưởng.",
     ],
   },
   {
-    title: "Dấu hiệu đỏ và quy tắc 30 giây",
-    summary: "Những tín hiệu xuất hiện trong hầu hết các vụ lừa đảo.",
+    category: "Trúng thưởng",
+    title: "Đóng phí nhận thưởng",
+    summary:
+      "Kẻ gian yêu cầu người dùng chuyển một khoản phí nhỏ trước khi nhận phần thưởng lớn.",
+    examples: [
+      "Vui lòng chuyển 500.000đ phí hồ sơ để nhận giải thưởng 100 triệu.",
+      "Bạn cần đóng phí vận chuyển quà tặng trước khi nhận giải.",
+    ],
     signs: [
-      "Yêu cầu chuyển tiền ngay.",
-      "Bảo giữ bí mật.",
-      "Đòi OTP.",
-      "Hứa lợi nhuận cao.",
-      "Đe dọa khóa tài khoản.",
-      "Tạo áp lực thời gian.",
-      "Yêu cầu cài ứng dụng lạ.",
-      "Yêu cầu truy cập từ xa vào điện thoại hoặc máy tính.",
-      "Yêu cầu cung cấp CCCD, ảnh khuôn mặt, thông tin ngân hàng.",
+      "Yêu cầu chuyển phí trước.",
+      "Hứa nhận phần thưởng lớn sau đó.",
+      "Có thể yêu cầu CCCD hoặc số tài khoản.",
     ],
     defenses: [
-      "Dừng lại 30 giây.",
-      "Không bấm link ngay.",
-      "Không cung cấp OTP.",
-      "Xác minh bằng kênh chính thức.",
-      "Hỏi ý kiến người thân nếu thấy áp lực hoặc hoang mang.",
+      "Không chuyển tiền để nhận thưởng.",
+      "Không gửi CCCD hoặc thông tin ngân hàng.",
+      "Báo cáo tin nhắn cho nhà mạng hoặc nền tảng liên quan.",
     ],
-    note: "Chỉ cần tuân thủ 5 bước này, bạn có thể tránh được phần lớn các hình thức lừa đảo phổ biến hiện nay.",
+  },
+  {
+    category: "Trúng thưởng",
+    title: "Vòng quay may mắn giả",
+    summary:
+      "Đường link mời quay thưởng, nhận quà miễn phí hoặc chia sẻ cho bạn bè để lấy phần thưởng.",
+    examples: [
+      "Bạn có một lượt quay trúng iPhone miễn phí. Bấm vào link để nhận quà.",
+      "Chia sẻ link này cho 5 người để mở khóa phần thưởng.",
+    ],
+    signs: [
+      "Link quay thưởng không rõ nguồn gốc.",
+      "Yêu cầu chia sẻ cho nhiều người.",
+      "Hứa quà tặng quá hấp dẫn.",
+      "Có thể yêu cầu đăng nhập hoặc nhập thông tin cá nhân.",
+    ],
+    defenses: [
+      "Không tham gia vòng quay từ link lạ.",
+      "Không chia sẻ link chưa kiểm chứng.",
+      "Không nhập tài khoản mạng xã hội vào trang lạ.",
+    ],
+  },
+
+  {
+    category: "Giả đơn vị giao hàng",
+    title: "Shipper yêu cầu chuyển khoản trước",
+    summary:
+      "Kẻ gian giả làm shipper, yêu cầu người nhận chuyển khoản phí hàng hoặc phí giao trước.",
+    examples: [
+      "Em là shipper, đơn của anh/chị cần thanh toán trước 35.000đ để giao.",
+      "Đơn hàng đang chờ giao, vui lòng chuyển khoản phí vận chuyển trước.",
+    ],
+    signs: [
+      "Tự xưng shipper nhưng không có thông tin đơn rõ ràng.",
+      "Yêu cầu chuyển khoản trước.",
+      "Tạo cảm giác đơn hàng sắp bị hủy.",
+    ],
+    defenses: [
+      "Kiểm tra đơn hàng trong app mua sắm.",
+      "Không chuyển khoản nếu không xác minh được đơn.",
+      "Gọi tổng đài đơn vị vận chuyển nếu nghi ngờ.",
+    ],
+  },
+  {
+    category: "Giả đơn vị giao hàng",
+    title: "Cập nhật địa chỉ giao hàng",
+    summary:
+      "Tin nhắn báo giao hàng thất bại và gửi link yêu cầu cập nhật địa chỉ.",
+    examples: [
+      "Đơn hàng giao thất bại. Bấm vào link để cập nhật địa chỉ nhận hàng.",
+      "Vui lòng xác nhận lại địa chỉ giao hàng tại đường dẫn bên dưới.",
+    ],
+    signs: [
+      "Thông báo giao thất bại bất ngờ.",
+      "Gửi link cập nhật thông tin.",
+      "Yêu cầu nhập số điện thoại, địa chỉ hoặc thông tin thanh toán.",
+    ],
+    defenses: [
+      "Không nhập thông tin qua link lạ.",
+      "Mở app mua sắm hoặc app vận chuyển để kiểm tra.",
+      "Chỉ cập nhật địa chỉ qua kênh chính thức.",
+    ],
+  },
+  {
+    category: "Giả đơn vị giao hàng",
+    title: "Phí hải quan hoặc phí lưu kho giả",
+    summary:
+      "Đối tượng giả danh đơn vị vận chuyển, báo đơn hàng bị giữ và yêu cầu đóng phí.",
+    examples: [
+      "Đơn hàng của bạn đang bị giữ tại kho. Vui lòng thanh toán phí lưu kho để nhận hàng.",
+      "Kiện hàng quốc tế cần đóng phí hải quan trước khi giao.",
+    ],
+    signs: [
+      "Yêu cầu đóng phí bất thường.",
+      "Không cung cấp mã vận đơn hợp lệ.",
+      "Gửi tài khoản cá nhân để nhận tiền.",
+      "Thúc giục thanh toán nhanh.",
+    ],
+    defenses: [
+      "Kiểm tra mã vận đơn trên website chính thức.",
+      "Không chuyển tiền vào tài khoản cá nhân.",
+      "Liên hệ tổng đài đơn vị vận chuyển để xác minh.",
+    ],
   },
 ];
 
@@ -505,9 +541,20 @@ function renderScamLibrary() {
         <article class="library-item">
           <button class="library-toggle" type="button" aria-expanded="false" data-index="${index}">
             <span class="library-toggle-title">
-              <strong>${index + 1}. ${escapeHtml(item.title)}</strong>
-              <span>${escapeHtml(item.summary)}</span>
-            </span>
+
+  <div class="library-header">
+
+    <strong>${index + 1}. ${escapeHtml(item.title)}</strong>
+
+    <span class="library-category">
+      ${escapeHtml(item.category)}
+    </span>
+
+  </div>
+
+  <span>${escapeHtml(item.summary)}</span>
+
+</span>
             <span class="library-chevron" aria-hidden="true">▼</span>
           </button>
           <div class="library-detail">
