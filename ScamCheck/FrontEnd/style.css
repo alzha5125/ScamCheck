@@ -737,3 +737,25 @@ footer {
   font-weight: 700;
   line-height: 1.65;
 }
+.library-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.library-category {
+  background: #dbeafe;
+
+  color: #2563eb;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  padding: 5px 12px;
+
+  border-radius: 999px;
+
+  white-space: nowrap;
+}
