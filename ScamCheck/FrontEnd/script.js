@@ -235,7 +235,6 @@ const screens = {
   loading: document.getElementById("loadingScreen"),
   result: document.getElementById("resultScreen"),
   history: document.getElementById("historyScreen"),
-  training: document.getElementById("trainingScreen"),
   library: document.getElementById("libraryScreen"),
 };
 
@@ -243,162 +242,12 @@ const messageInput = document.getElementById("messageInput");
 const analyzeBtn = document.getElementById("analyzeBtn");
 const openHistoryBtn = document.getElementById("openHistoryBtn");
 const closeHistoryBtn = document.getElementById("closeHistoryBtn");
-const openTrainingBtn = document.getElementById("openTrainingBtn");
-const closeTrainingBtn = document.getElementById("closeTrainingBtn");
 const openLibraryBtn = document.getElementById("openLibraryBtn");
 const closeLibraryBtn = document.getElementById("closeLibraryBtn");
 const backHomeBtn = document.getElementById("backHomeBtn");
 const resultShareUrl = document.getElementById("resultShareUrl");
 const copyShareUrlBtn = document.getElementById("copyShareUrlBtn");
 const websiteUrlInput = document.getElementById("websiteUrlInput");
-const imageFileInput = document.getElementById("imageFileInput");
-const analyzeImageBtn = document.getElementById("analyzeImageBtn");
-const imageFileStatus = document.getElementById("imageFileStatus");
-const voiceInputBtn = document.getElementById("voiceInputBtn");
-const voiceInputStatus = document.getElementById("voiceInputStatus");
-const trainingPrompt = document.getElementById("trainingPrompt");
-const trainingFeedback = document.getElementById("trainingFeedback");
-const trainingScore = document.getElementById("trainingScore");
-const nextTrainingBtn = document.getElementById("nextTrainingBtn");
-const trainingChoiceBtns = document.querySelectorAll(".training-choice");
-
-let currentTrainingQuestion = null;
-let trainingStats = { correct: 0, total: 0 };
-
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
-
-let voiceRecognition = null;
-let isListeningForVoice = false;
-let isStartingVoice = false;
-let hasSpokenTextInSession = false;
-
-function setVoiceStatus(message = "", isListening = false) {
-  if (voiceInputStatus) {
-    voiceInputStatus.textContent = message;
-  }
-
-  if (voiceInputBtn) {
-    voiceInputBtn.classList.toggle("listening", isListening);
-    voiceInputBtn.setAttribute("aria-pressed", String(isListening));
-    voiceInputBtn.textContent = isListening ? "Dừng ghi âm" : "Bắt đầu đọc";
-  }
-}
-
-function appendSpokenText(text) {
-  const transcript = text.trim();
-
-  if (!transcript) return;
-
-  const currentText = messageInput.value.trim();
-  messageInput.value = currentText ? `${currentText} ${transcript}` : transcript;
-  messageInput.focus();
-}
-
-function setupVoiceInput() {
-  if (!voiceInputBtn) return;
-
-  const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(
-    window.location.hostname,
-  );
-
-  if (!window.isSecureContext && !isLocalhost) {
-    voiceInputBtn.disabled = true;
-    setVoiceStatus("Cần mở trang bằng HTTPS hoặc localhost để dùng micro.");
-    return;
-  }
-
-  if (!SpeechRecognition) {
-    voiceInputBtn.disabled = true;
-    setVoiceStatus("Trình duyệt này chưa hỗ trợ. Hãy thử Chrome hoặc Edge.");
-    return;
-  }
-
-  voiceRecognition = new SpeechRecognition();
-  voiceRecognition.lang = "vi-VN";
-  voiceRecognition.continuous = false;
-  voiceRecognition.interimResults = true;
-  voiceRecognition.maxAlternatives = 1;
-
-  voiceRecognition.addEventListener("start", () => {
-    isListeningForVoice = true;
-    isStartingVoice = false;
-    hasSpokenTextInSession = false;
-    setVoiceStatus("Đang nghe...", true);
-  });
-
-  voiceRecognition.addEventListener("result", (event) => {
-    let finalText = "";
-    let interimText = "";
-
-    for (let index = event.resultIndex; index < event.results.length; index++) {
-      const result = event.results[index];
-      const transcript = result[0]?.transcript || "";
-
-      if (result.isFinal) {
-        finalText += transcript;
-      } else {
-        interimText += transcript;
-      }
-    }
-
-    if (interimText.trim()) {
-      setVoiceStatus(`Đang nghe: ${interimText.trim()}`, true);
-    }
-
-    if (finalText.trim()) {
-      hasSpokenTextInSession = true;
-      appendSpokenText(finalText);
-      setVoiceStatus("Đã thêm nội dung vừa đọc.", true);
-    }
-  });
-
-  voiceRecognition.addEventListener("error", (event) => {
-    isListeningForVoice = false;
-    isStartingVoice = false;
-
-    const messages = {
-      "not-allowed": "Quyền sử dụng micro đã bị chặn.",
-      "service-not-allowed": "Trình duyệt đang chặn dịch vụ nhận diện giọng nói.",
-      "no-speech": "Không nghe thấy giọng nói. Hãy thử lại.",
-      "audio-capture": "Không tìm thấy micro.",
-      network: "Nhập bằng giọng nói cần kết nối Internet.",
-      aborted: "Đã hủy ghi âm.",
-    };
-
-    setVoiceStatus(messages[event.error] || "Đã dừng nhập bằng giọng nói.");
-  });
-
-  voiceRecognition.addEventListener("end", () => {
-    const hadText = hasSpokenTextInSession;
-
-    isListeningForVoice = false;
-    isStartingVoice = false;
-
-    setVoiceStatus(
-      hadText ? "Đã thêm nội dung vào ô tin nhắn." : "Đã dừng. Hãy thử nói rõ hơn.",
-    );
-  });
-
-  voiceInputBtn.addEventListener("click", () => {
-    if (isListeningForVoice) {
-      voiceRecognition.stop();
-      return;
-    }
-
-    if (isStartingVoice) return;
-
-    try {
-      isStartingVoice = true;
-      messageInput.focus();
-      setVoiceStatus("Đang xin quyền micro...");
-      voiceRecognition.start();
-    } catch (error) {
-      isStartingVoice = false;
-      setVoiceStatus("Không thể bắt đầu ghi âm. Hãy thử bấm lại.");
-    }
-  });
-}
 
 const analyzeWebsiteBtn = document.getElementById("analyzeWebsiteBtn");
 if (analyzeWebsiteBtn) {
@@ -432,61 +281,6 @@ if (analyzeWebsiteBtn) {
     }
   });
 }
-
-if (imageFileInput && imageFileStatus) {
-  imageFileInput.addEventListener("change", () => {
-    const file = imageFileInput.files?.[0];
-
-    imageFileStatus.textContent = file
-      ? `Selected: ${file.name}`
-      : "Tải ảnh chụp tin nhắn, email, mã QR hoặc website.";
-  });
-}
-
-if (analyzeImageBtn && imageFileInput) {
-  analyzeImageBtn.addEventListener("click", async () => {
-    const file = imageFileInput.files?.[0];
-
-    if (!file) {
-      alert("Hãy chọn ảnh cần kiểm tra.");
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      alert("File này không phải là ảnh.");
-      return;
-    }
-
-    if (file.size > 8 * 1024 * 1024) {
-      alert("Ảnh quá lớn. Hãy chọn ảnh dưới 8MB.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("image", file);
-
-    showScreen("loading");
-
-    try {
-      const response = await fetch("/analyze-image", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Không thể kiểm tra ảnh.");
-      }
-
-      renderResult(`Image: ${file.name}`, result, true);
-      showScreen("result");
-    } catch (error) {
-      alert(error.message || "Không thể kiểm tra ảnh.");
-      showScreen("home");
-    }
-  });
-}
 function showScreen(name) {
   Object.values(screens).forEach((screen) => screen.classList.remove("active"));
   screens[name].classList.add("active");
@@ -496,96 +290,6 @@ function showScreen(name) {
 function showFriendlyError(message) {
   alert(message);
   showScreen("home");
-}
-
-function updateTrainingScore() {
-  if (trainingScore) {
-    trainingScore.textContent = `Điểm: ${trainingStats.correct} / ${trainingStats.total}`;
-  }
-}
-
-function setTrainingChoicesEnabled(isEnabled) {
-  trainingChoiceBtns.forEach((button) => {
-    button.disabled = !isEnabled;
-    button.classList.remove("selected", "correct", "incorrect");
-  });
-}
-
-function renderTrainingQuestion(question) {
-  currentTrainingQuestion = question;
-
-  if (trainingPrompt) {
-    trainingPrompt.textContent = question.text || "Chưa có câu luyện tập.";
-  }
-
-  if (trainingFeedback) {
-    trainingFeedback.textContent = "";
-    trainingFeedback.className = "training-feedback";
-  }
-
-  setTrainingChoicesEnabled(true);
-
-  if (nextTrainingBtn) {
-    nextTrainingBtn.textContent = "Ví dụ tiếp theo";
-  }
-}
-
-async function loadTrainingQuestion() {
-  if (trainingPrompt) {
-    trainingPrompt.textContent = "Đang tạo ví dụ mới...";
-  }
-
-  if (trainingFeedback) {
-    trainingFeedback.textContent = "";
-    trainingFeedback.className = "training-feedback";
-  }
-
-  setTrainingChoicesEnabled(false);
-
-  try {
-    const response = await fetch("/training-question", { method: "POST" });
-    const question = await response.json();
-
-    if (!response.ok) {
-      throw new Error(question.error || "Không thể tải ví dụ luyện tập.");
-    }
-
-    renderTrainingQuestion(question);
-  } catch (error) {
-    if (trainingPrompt) {
-      trainingPrompt.textContent =
-        error.message || "Không thể tải ví dụ luyện tập.";
-    }
-  }
-}
-
-function answerTrainingQuestion(selectedAnswer, selectedButton) {
-  if (!currentTrainingQuestion) return;
-
-  const correctAnswer = currentTrainingQuestion.is_scam ? "scam" : "safe";
-  const isCorrect = selectedAnswer === correctAnswer;
-
-  trainingStats.total += 1;
-  if (isCorrect) {
-    trainingStats.correct += 1;
-  }
-  updateTrainingScore();
-
-  trainingChoiceBtns.forEach((button) => {
-    button.disabled = true;
-    const isCorrectButton = button.dataset.answer === correctAnswer;
-    button.classList.toggle("correct", isCorrectButton);
-    button.classList.toggle("incorrect", button === selectedButton && !isCorrect);
-  });
-
-  if (trainingFeedback) {
-    const label = currentTrainingQuestion.is_scam ? "Lừa đảo" : "Không lừa đảo";
-    trainingFeedback.className = `training-feedback ${isCorrect ? "good" : "bad"}`;
-    trainingFeedback.innerHTML = `
-      <strong>${isCorrect ? "Chính xác." : "Chưa đúng."}</strong>
-      Đáp án: ${label}. ${escapeHtml(currentTrainingQuestion.explanation || "")}
-    `;
-  }
 }
 
 function classifyMessage(text) {
@@ -1020,38 +724,14 @@ openHistoryBtn.addEventListener("click", () => {
   showScreen("history");
 });
 
-if (openTrainingBtn) {
-  openTrainingBtn.addEventListener("click", () => {
-    updateTrainingScore();
-    showScreen("training");
-
-    if (!currentTrainingQuestion) {
-      loadTrainingQuestion();
-    }
-  });
-}
-
 openLibraryBtn.addEventListener("click", () => {
   renderScamLibrary();
   showScreen("library");
 });
 
 closeHistoryBtn.addEventListener("click", () => showScreen("home"));
-if (closeTrainingBtn) {
-  closeTrainingBtn.addEventListener("click", () => showScreen("home"));
-}
 closeLibraryBtn.addEventListener("click", () => showScreen("home"));
 backHomeBtn.addEventListener("click", () => showScreen("home"));
-
-if (nextTrainingBtn) {
-  nextTrainingBtn.addEventListener("click", loadTrainingQuestion);
-}
-
-trainingChoiceBtns.forEach((button) => {
-  button.addEventListener("click", () => {
-    answerTrainingQuestion(button.dataset.answer, button);
-  });
-});
 let latestMessage = "";
 let latestResult = null;
 
@@ -1325,7 +1005,6 @@ if (copyShareUrlBtn && resultShareUrl) {
   });
 }
 
-setupVoiceInput();
 loadSharedResultFromUrl();
 document.querySelectorAll(".choice-button").forEach((button) => {
   button.addEventListener("click", async () => {
